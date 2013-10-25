@@ -13,6 +13,7 @@ package: build
 
 test:
 	go get -u -v
+	go get github.com/knakk/specs
 	go test -i
 	go test ./...
 
