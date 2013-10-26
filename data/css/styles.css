@@ -6,15 +6,21 @@ article,aside,details,figcaption,figure,footer,header,hgroup,main,nav,section,su
 
 #container { width: 100%; margin:auto;}
 body { font-family: Arial; }
-.russekort { margin: 0 0 2em; }
+.russekort { margin: 0 0 2em; position:relative; }
 .russeinfo { line-height:1.7em; font-size:0.95em;}
-.russekort:hover { background: #eee;}
+.inactive:hover { background: #eee;}
+.active { background: #FEDF00;}
 .russebilde { float: left; height: 150px; margin-right: 1em;}
+.edit { visibility:hidden; position: absolute; right:4px; bottom:0px; font-family:monospace; font-size:0.8em;}
+a { color: blue; }
+a:hover { text-decoration: underline; cursor:pointer;}
+.edit-actions { text-align: right; font-family: monospace;}
+.inactive:hover .edit { visibility: visible;}
 .menu { font-family: monospace; background:#ccc; line-height: 2rem; margin-bottom: 1em;}
 .logo { margin-right: 2em; display: none;}
 .search { padding: 2px; margin-right: 2em; width: 16em;}
-
-
+.edit-m { width: 6em; margin: 0 1em 4px 0; }
+.edit-l { margin-top:4px;}
 @media only screen
 and (min-width : 768px) {
 	.logo { display: inline-block;}
