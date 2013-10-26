@@ -89,13 +89,14 @@ func (db *DB) Get(id int) (*[]byte, error) {
 	return nil, errors.New("document not found")
 }
 
-// Set updates a document at agive id.
+// Set updates a document at a given id. The document does not need to exist.
 func (db *DB) Set(id int, data *[]byte) {
 	db.Lock()
 	defer db.Unlock()
 	db.docs[id] = *data
 	// Make sure ID is in the set. Needed when a DB is loaded from file.
 	db.all.Add(id)
+	// Always update db.idMax to the highest Id number
 	if id > db.idMax {
 		db.idMax = id
 	}
