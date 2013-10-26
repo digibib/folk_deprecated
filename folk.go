@@ -53,6 +53,7 @@ func init() {
 		"GET",
 		"/css/styles.css",
 		serveFile("data/css/styles.css"))
+	mux.HandleNamespace("/data/img", http.FileServer(http.Dir("data/img/")))
 }
 
 func main() {

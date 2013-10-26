@@ -10,14 +10,94 @@
 
 <body>
 
-  <div id="container">
-    <p>hei</p>
+  <div class="grid m-grid--divide-2 l-grid--divide-3" id="container">
+    <div class="menu grid_field-unit">
+        <span class="logo"><strong>folk.deichman.no</strong></span>
+        <input class="search" type="text" placeholder="søk" />
+        <select id="select-avd">
+          <option value="avd-alle">Hele biblioteket</option>
+          <option value="avd-x">Faglige støttefunksjoner</option>
+          <option value="avd-x">--Drift</option>
+          <option value="avd-x">--Kunnskapsorganisering</option>
+          <option>Hovedbiblioteket</option>
+          <option value="avd-1">--Musikkavdelingen</option>
+          <option value="avd-x">--Unge Deichman</option>
+          <option value="avd-x">--Voksenavdelingen</option>
+          <option value="avd-2">Bjerke</option>
+          <option value="avd-x">Bjørnholt</option>
+          <option value="avd-3">Bøler</option>
+          <option value="avd-x">Fengselsbibliotekene</option>
+          <option value="avd-x">Furuset</option>
+          <option value="avd-x">Gamle Oslo</option>
+          <option value="avd-x">Grünerløkka</option>
+          <option value="avd-x">Lambertseter</option>
+          <option value="avd-4">Majorstua</option>
+          <option value="avd-x">Stovner</option>
+          <option value="avd-x">Torshov</option>
+        </select>
+    </div>
+    <div class="grid_unit russekort avd-3">
+      <div class="russeinfo">
+        <img src="/data/img/putin.jpg" class="russebilde">
+        <strong><a href="mailto:petter@dott.com">Mr Putin</a></strong><br>
+        <em>President, Bøler</em><br>
+        Tlf: +7 12312123<br>
+        Liker jakt og fiske. Nyskilt og klar for nye eventyr.<br>
+      </div>
+    </div>
+    <div class="grid_unit russekort avd-2">
+      <div class="russeinfo">
+        <img src="/data/img/putin.jpg" class="russebilde">
+        <strong><a href="mailto:petter@dott.com">Mr Putin</a></strong><br>
+        <em>President, Bjerke</em><br>
+        Tlf: +7 12312123<br>
+        Liker jakt og fiske. Nyskilt og klar for nye eventyr.<br>
+      </div>
+    </div>
+    <div class="grid_unit russekort avd-1">
+      <img src="/data/img/putin.jpg" class="russebilde">
+        <strong><a href="mailto:petter@dott.com">Mr Putin</a></strong><br>
+        <div class="russeinfo">
+        <em>President, Musikkavdelingen</em><br>
+        Tlf: +7 12312123<br>
+        Liker jakt og fiske. Nyskilt og klar for nye eventyr.<br>
+      </div>
+    </div>
+    <div class="grid_unit russekort avd-2">
+      <div class="russeinfo">
+        <img src="/data/img/putin.jpg" class="russebilde">
+        <strong><a href="mailto:petter@dott.com">Mr Putin</a></strong><br>
+        <em>President, Bjerke</em><br>
+        Tlf: +7 12312123<br>
+        Liker jakt og fiske. Nyskilt og klar for nye eventyr.<br>
+      </div>
+
+    </div>
+    <div class="grid_unit russekort avd-4">
+      <div class="russeinfo">
+        <img src="/data/img/putin.jpg" class="russebilde">
+        <strong><a href="mailto:petter@dott.com">Mr Putin</a></strong><br>
+        <em>President, Majorstua</em><br>
+        Tlf: +7 12312123<br>
+        Jobber med jakt og fiske. Nyskilt og klar for nye eventyr.<br>
+      </div>
+
+    </div>
+    </div>
 
   </div>
-  
+
   <script>
     $("document").ready(function() {
-      console.log("start");
+      $('#select-avd').on('change', function() {
+        var selected = $('#select-avd').val();
+        if (selected === 'avd-alle') {
+          $('.russekort').show();
+        } else {
+          $('.russekort').hide();
+          $('.'+selected).show();
+        }
+      })
     });
   </script>
 </body>
