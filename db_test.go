@@ -77,7 +77,7 @@ func TestCRUD(t *testing.T) {
 	s.ExpectNilFatal(err)
 	s.Expect(db2.Size(), 2)
 
-	err = db.Dump("cpy.json")
+	err = db2.Dump("cpy.json")
 	s.ExpectNilFatal(err)
 
 	// compare the db files to make sure they are equal

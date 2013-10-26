@@ -50,7 +50,7 @@ func NewFromFile(fname string) (*DB, error) {
 	}
 
 	for _, d := range docs {
-		err := d.Data.UnmarshalJSON(bcopy)
+		bcopy, err = d.Data.MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
