@@ -11,10 +11,10 @@ import (
 )
 
 var (
-	templates = template.Must(template.ParseFiles("data/html/folk.html", "data/html/admin.html"))
-	mux       *tigertonic.TrieServeMux
-	avd, folk *DB
-	err       error
+	templates            = template.Must(template.ParseFiles("data/html/folk.html", "data/html/admin.html"))
+	mux                  *tigertonic.TrieServeMux
+	departments, persons *DB
+	err                  error
 )
 
 type dept struct {
@@ -30,10 +30,23 @@ type depts struct {
 	Depts  []dept
 }
 
+type person struct {
+	ID    int
+	Name  string
+	Role  string
+	Dept  int
+	Email string
+	Image string
+	Phone string
+	Info  string
+}
+
 func deptHierarchy(db *DB) []depts {
-	var r []depts
-	var d dept
-	var max = db.Size()
+	var (
+		r   []depts
+		d   dept
+		max = db.Size()
+	)
 	for i := 0; i <= max; i++ {
 		data, err := db.Get(i)
 		if err != nil {
@@ -61,7 +74,7 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Departments []depts
 	}{
-		deptHierarchy(avd),
+		deptHierarchy(departments),
 	}
 	err := templates.ExecuteTemplate(w, "folk.html", data)
 	if err != nil {
@@ -70,7 +83,12 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminHandler(w http.ResponseWriter, r *http.Request) {
-	err := templates.ExecuteTemplate(w, "admin.html", nil)
+	data := struct {
+		Departments []depts
+	}{
+		deptHierarchy(departments),
+	}
+	err := templates.ExecuteTemplate(w, "admin.html", data)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -84,11 +102,15 @@ func serveFile(filename string) func(w http.ResponseWriter, r *http.Request) {
 }
 
 func init() {
-	avd, err = NewFromFile("data/avd.db")
+	departments, err = NewFromFile("data/avd.db")
 	if err != nil {
-		avd = New(32)
+		departments = New(32)
 	}
-
+	persons, err = NewFromFile("data/folk.db")
+	if err != nil {
+		persons = New(256)
+	}
+	setupAPIRouting() // apiMux
 	mux = tigertonic.NewTrieServeMux()
 	mux.HandleFunc(
 		"GET",
@@ -107,12 +129,13 @@ func init() {
 		"/css/styles.css",
 		serveFile("data/css/styles.css"))
 	mux.HandleNamespace("/data/img", http.FileServer(http.Dir("data/img/")))
+	mux.HandleNamespace("/api", apiMux)
+	tigertonic.SnakeCaseHTTPEquivErrors = true
 }
 
 func main() {
 	port := flag.String("port", "9999", "serve from this port")
 	flag.Parse()
-
 	server := tigertonic.NewServer(":"+*port, mux)
 	log.Fatal(server.ListenAndServe())
 }
