@@ -5,13 +5,18 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"regexp"
 
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/rcrowley/go-tigertonic"
 )
+
+const MAX_IMG_SIZE = 1 * 1024 * 1024 // 1 MB
 
 var (
 	templates = template.Must(template.ParseFiles(
@@ -23,6 +28,7 @@ var (
 	err                  error
 	store                *sessions.CookieStore
 	username, password   *string
+	imageFileNames       = regexp.MustCompile(`(\.png|\.jpg|\.jpeg)$`)
 )
 
 type dept struct {
@@ -44,7 +50,7 @@ type person struct {
 	Role  string
 	Dept  int
 	Email string
-	Image string
+	Img   string
 	Phone string
 	Info  string
 }
@@ -103,11 +109,22 @@ func adminHandler(w http.ResponseWriter, r *http.Request) {
 	// 	loginHandler(w, r)
 	// 	return
 	// }
+	var imageFiles []string
+	files, err := ioutil.ReadDir("./data/img/")
+	if err == nil {
+		for _, f := range files {
+			if imageFileNames.MatchString(f.Name()) {
+				imageFiles = append(imageFiles, f.Name())
+			}
+		}
+	}
 
 	data := struct {
 		Departments []depts
+		Images      []string
 	}{
 		deptHierarchy(departments),
+		imageFiles,
 	}
 	err = templates.ExecuteTemplate(w, "admin.html", data)
 	if err != nil {
@@ -151,6 +168,27 @@ func createSession(r *http.Request) *sessions.Session {
 	return session
 }
 
+func uploadHandler(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseMultipartForm(MAX_IMG_SIZE); err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusForbidden)
+	}
+
+	for key, value := range r.MultipartForm.Value {
+		fmt.Fprintf(w, "%s:%s ", key, value)
+		log.Printf("%s:%s", key, value)
+	}
+
+	for _, fileHeaders := range r.MultipartForm.File {
+		for _, fileHeader := range fileHeaders {
+			file, _ := fileHeader.Open()
+			path := fmt.Sprintf("data/img/%s", fileHeader.Filename)
+			buf, _ := ioutil.ReadAll(file)
+			ioutil.WriteFile(path, buf, os.ModePerm)
+		}
+	}
+}
+
 // serveFile serves a single file from disk.
 func serveFile(filename string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -171,6 +209,10 @@ func init() {
 
 	// HTTP routing
 	mux = tigertonic.NewTrieServeMux()
+	mux.HandleFunc(
+		"POST",
+		"/upload",
+		uploadHandler)
 	mux.HandleFunc(
 		"GET",
 		"/",

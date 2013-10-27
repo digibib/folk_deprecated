@@ -31,13 +31,13 @@ func TestApiCRUD(t *testing.T) {
 		{"/department", "{zappa}", 400, "json.SyntaxError"},
 		{"/department", "{\"name\": \"æøå\", \"parent\": 2}", 400, "parent department doesn't exist"},
 		{"/department", "{\"name\": \"xyz\", \"parent\": 1}", 201, "\"Parent\":1"},
-		{"/person", "{\"name\": \"Mr. P\"}", 400, "required parameters: name, department"},
-		{"/person", "{\"department\": 1}", 400, "required parameters: name"},
-		{"/person", "{\"name\": \"Mr. P\", \"department\": 100}", 400, "department doesn't exist"},
-		{"/person", "{\"name\": \"Mr. P\", \"department\": 1}", 201, "\"Name\":\"Mr. P\""},
-		{"/person", "{\"name\": \"a\", \"department\": 1}", 201, "\"Name\":\"a\""},
-		{"/person", "{\"name\": \"bill\", \"department\": 2}", 201, "\"Name\":\"bill\""},
-		{"/person", "{\"name\": \"Mr. c\", \"department\": 2}", 201, "\"Name\":\"Mr. c\""},
+		{"/person", "{\"name\": \"Mr. P\"}", 400, "required parameters: name, department, email"},
+		{"/person", "{\"department\": 1}", 400, "required parameters: name, department, email"},
+		{"/person", "{\"name\": \"Mr. P\", \"email\":\"a@b\", \"department\": 100}", 400, "department doesn't exist"},
+		{"/person", "{\"name\": \"Mr. P\", \"email\":\"a@b\", \"department\": 1}", 201, "\"Name\":\"Mr. P\""},
+		{"/person", "{\"name\": \"a\", \"department\": 1, \"email\":\"a@b\"}", 201, "\"Name\":\"a\""},
+		{"/person", "{\"name\": \"bill\", \"department\": 2, \"email\":\"a@b\"}", 201, "\"Name\":\"bill\""},
+		{"/person", "{\"name\": \"Mr. c\", \"department\": 2, \"email\":\"a@b\"}", 201, "\"Name\":\"Mr. c\""},
 	}
 
 	for _, tt := range testsPOST {

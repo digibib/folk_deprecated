@@ -24,12 +24,13 @@ a:hover { text-decoration: underline; cursor:pointer;}
 .edit-l { margin-top:4px;}
 .folk_table { font-size:0.8em;}
 .p_ny { line-height: 3em; background: #FEDF00;}
-.p_eksisterende tr:nth-child(odd) { background-color: #eee;}
+.p_eksisterende tr:nth-child(even) { background-color: #eee;}
 th { text-align: left;}
 td { padding-right: 1em;}
-.td-info { width: 200px;}
+.td-info { min-width: 200px; }
 button { margin-right: 1em;}
 .error { color: red;}
+.invisible { display:none;}
 
 @media only screen
 and (min-width : 768px) {

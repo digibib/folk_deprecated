@@ -35,7 +35,7 @@
             <th>Avdeling</th>
             <th>Bilde</th>
             <th>Endringer</th>
-            <th class="td-info"></th>
+            <th class="td-info">Tilbakemeldinger</th>
           </tr>
         </thead>
         <tbody class="p_ny">
@@ -48,20 +48,20 @@
                 {{range $p := .Departments}}
                 <option value="avd-{{$p.ID}}">{{$p.Name}}</option>
                   {{range $d := $p.Depts}}
-                  <option value="avd-{{$p.ID}} avd-{{$d.ID}}">&nbsp;&nbsp;{{$d.Name}}</option>
+                  <option value="avd-{{$d.ID}}">&nbsp;&nbsp;{{$d.Name}}</option>
                   {{end}}
                 {{end}}
               </select>
             </td>
-            <td><button>Last opp</button></td>
-            <td><button disabled="disabled">Legg til ny ansatt</button></td>
-            <td></td>
+            <td><input id="p_ny_fil" type="file" accept="image/*"></td>
+            <td><button id="p_legg_til" disabled="disabled">Legg til ny ansatt</button></td>
+            <td class="td-info"></td>
           </tr>
         </tbody>
 
         <tbody class="p_eksisterende">
-          <tr>
-            <td>1</td>
+          <tr class="invisible">
+            <td class="p_id">1</td>
             <td><input class="p_navn" type="text" placeholder="navn" value="Petter Goks" /></td>
             <td><input class="p_epost" type="text" placeholder="e-post adresse" value="petter@dott.com" /></td>
             <td>
@@ -69,12 +69,18 @@
                 {{range $p := .Departments}}
                 <option value="avd-{{$p.ID}}">{{$p.Name}}</option>
                   {{range $d := $p.Depts}}
-                  <option value="avd-{{$p.ID}} avd-{{$d.ID}}">&nbsp;&nbsp;{{$d.Name}}</option>
+                  <option value="avd-{{$d.ID}}">&nbsp;&nbsp;{{$d.Name}}</option>
                   {{end}}
                 {{end}}
               </select>
             </td>
-            <td><a href="/data/img/putin.jpg">putin.jpg</a></td>
+            <td>
+              <select class="p_bilde">
+                {{range .Images}}
+                <option value="{{.}}">{{.}}</option>
+                {{end}}
+              </select>
+            </td>
             <td><button class="p_lagre" disabled="disabled">Lagre</button><button class="p_slett">Slett</button></td>
             <td class="td-info"></td>
           </tr>
@@ -86,12 +92,92 @@
 
   <script>
     $("document").ready(function() {
+      // Enable 'legg til ny ansatt' button when name+email fields are filled.
+      $('.p_ny input').on('keyup',  function() {
+        var navn = $('.p_ny').find('.p_navn:first').val();
+        var epost = $('.p_ny').find('.p_epost:first').val();
+        if (navn !== "" && epost !== "" ) {
+          $('#p_legg_til').prop('disabled', false);
+        } else {
+          $('#p_legg_til').prop('disabled', true);
+        }
+      });
+
+      // Add person
+      $('#p_legg_til').on('click', function() {
+        var dept = parseInt($('.p_ny').find('select option:selected').val().substr(4));
+        var req = $.ajax({
+          url: '/api/person',
+          type: 'POST',
+          contentType: "application/json; charset=utf-8",
+          data: JSON.stringify({
+            Name: $('.p_ny').find('.p_navn:first').val(),
+            Email: $('.p_ny').find('.p_epost:first').val(),
+            Department: dept,
+            Img: $('#p_ny_fil').val().split(/\\|\//).pop() // Split on \|/ to get only filname without path
+          }),
+          dataType: 'json'
+        });
+
+        req.done(function(data, textStatus, XMLHttpRequest) {
+          console.log(data.Data);
+          var $tr = $('.p_eksisterende tr:first').clone();
+          $tr.find('.p_id').html(data.ID);
+          $tr.find('.p_navn').val(data.Data.Name);
+          $tr.find('.p_epost').val(data.Data.Email);
+          $tr.find('.select-avd').val('avd-'+data.Data.Department);
+          $tr.find('.p_bilde').val(data.Data.Img);
+          $tr.removeClass('invisible');
+          $('.p_eksisterende').prepend($tr);
+
+          // clear the add person form fields
+          $('.p_ny input').val("");
+          $('.p_ny').find('.td-info').html('');
+          $('#p_legg_til').prop('disabled', true);
+          $('.p_ny select').val('avd-1');
+        });
+
+        req.fail(function(jqXHR, textStatus, errThrown) {
+          $('.p_ny').find('.td-info').html(jqXHR.responseJSON.description);
+        });
+      });
+
+      // Delete person
       $(".folk_table").on('click', '.p_slett', function() {
           if ( ! window.confirm("Er du sikker?") ) {
           return;
         }
         $(this).parents("tr").find(".td-info").html('<img src="/data/img/loading.gif">');
         console.log("sletta");
+      });
+
+      // upload file
+      $('#p_ny_fil').on('change', function(e) {
+        var file = this.files[0];
+        if ( file == "" ) {
+          return;
+        }
+        var fd = new FormData;
+        fd.append('photo1', file);
+        var xhr = new XMLHttpRequest();
+        xhr.addEventListener('progress', function(e) {
+            var done = e.position || e.loaded, total = e.totalSize || e.total;
+            console.log('xhr progress: ' + (Math.floor(done/total*1000)/10) + '%');
+        }, false);
+        if ( xhr.upload ) {
+            xhr.upload.onprogress = function(e) {
+                var done = e.position || e.loaded, total = e.totalSize || e.total;
+                $('.p_ny').find('.td-info').html((Math.floor(done/total*1000)/10) + '%');
+                //console.log('xhr.upload progress: ' + done + ' / ' + total + ' = ' + (Math.floor(done/total*1000)/10) + '%');
+            };
+        }
+        xhr.onreadystatechange = function(e) {
+            if ( 4 == this.readyState ) {
+                $('.p_ny').find('.td-info').html('100% OK');
+            }
+        };
+        xhr.open('post', "/upload", true);
+        xhr.send(fd);
       });
     });
   </script>

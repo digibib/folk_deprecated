@@ -17,6 +17,8 @@ var apiMux *tigertonic.TrieServeMux
 type PersonRequest struct {
 	Name       string
 	Department int
+	Email      string
+	Img        string
 }
 
 type PersonResponse struct {
@@ -105,14 +107,14 @@ func createDepartment(u *url.URL, h http.Header, rq *DepartmentRequest) (int, ht
 
 // POST /person
 func createPerson(u *url.URL, h http.Header, rq *PersonRequest) (int, http.Header, *PersonResponse, error) {
-	if rq.Department == 0 || rq.Name == "" {
-		return http.StatusBadRequest, nil, nil, errors.New("required parameters: name, department")
+	if rq.Department == 0 || rq.Name == "" || rq.Email == "" {
+		return http.StatusBadRequest, nil, nil, errors.New("required parameters: name, department, email")
 	}
 	_, err := departments.Get(rq.Department)
 	if err != nil {
 		return http.StatusBadRequest, nil, nil, errors.New("department doesn't exist")
 	}
-	p := PersonRequest{rq.Name, rq.Department}
+	p := PersonRequest{Name: rq.Name, Department: rq.Department, Email: rq.Email, Img: rq.Img}
 	b, err := json.Marshal(p)
 	if err != nil {
 		return http.StatusInternalServerError, nil, nil, errors.New("failed to marshal JSON")
