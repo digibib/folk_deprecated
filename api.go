@@ -114,7 +114,11 @@ func createPerson(u *url.URL, h http.Header, rq *PersonRequest) (int, http.Heade
 	if err != nil {
 		return http.StatusBadRequest, nil, nil, errors.New("department doesn't exist")
 	}
-	p := PersonRequest{Name: rq.Name, Department: rq.Department, Email: rq.Email, Img: rq.Img}
+	img := rq.Img
+	if img == "" {
+		img = "dummy.png"
+	}
+	p := PersonRequest{Name: rq.Name, Department: rq.Department, Email: rq.Email, Img: img}
 	b, err := json.Marshal(p)
 	if err != nil {
 		return http.StatusInternalServerError, nil, nil, errors.New("failed to marshal JSON")

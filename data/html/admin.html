@@ -76,12 +76,13 @@
             </td>
             <td>
               <select class="p_bilde">
+                <option value="dummy.png">bilde ikke valgt</option>
                 {{range .Images}}
                 <option value="{{.}}">{{.}}</option>
                 {{end}}
               </select>
             </td>
-            <td><button class="p_lagre" disabled="disabled">Lagre</button><button class="p_slett">Slett</button></td>
+            <td><button class="p_lagre">Lagre</button><button class="p_slett">Slett</button></td>
             <td class="td-info"></td>
           </tr>
         </tbody>
