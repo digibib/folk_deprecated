@@ -157,6 +157,15 @@
         if ( file == "" ) {
           return;
         }
+        var mimeType=this.files[0].type;
+        if (file.size > (2 * 1024 * 1024) ) {
+          $('.p_ny').find('.td-info').html('max image size: 2 MB');
+          return;
+        }
+        if ( !mimeType.match(/(png|jpeg)$/) )  {
+          $('.p_ny').find('.td-info').html('only image/jpeg or image/png please');
+          return;
+        }
         var fd = new FormData;
         fd.append('photo1', file);
         var xhr = new XMLHttpRequest();
