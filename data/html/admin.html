@@ -12,7 +12,7 @@
 
   <div class="grid" id="container">
     <div class="menu grid_field-unit">
-        <span class="logo"><strong>folk.deichman.no</strong></span>
+        <span class="logo"><strong><a href="/">folk.deichman.no</a></strong></span>
         <input class="search" type="text" placeholder="søk" />
         <select class="select-avd">
           <option value="avd-alle">Hele Deichman</option>
@@ -29,12 +29,12 @@
       <table class="folk_table">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Navn</th>
-            <th>E-post</th>
-            <th>Avdeling</th>
-            <th>Bilde</th>
-            <th>Endringer</th>
+            <th class="td-short">ID</th>
+            <th class="td-medium">Navn</th>
+            <th class="td-medium">E-post</th>
+            <th class="td-medium">Avdeling</th>
+            <th class="td-medium">Bilde</th>
+            <th class="td-medium">Endringer</th>
             <th class="td-info">Tilbakemeldinger</th>
           </tr>
         </thead>
@@ -93,6 +93,21 @@
 
   <script>
     $("document").ready(function() {
+      // Populate table
+      $.getJSON("/api/person?page=1", function(data) {
+        console.log(data);
+        $.each(data.Hits, function(i, p) {
+          var $tr = $('.p_eksisterende tr:first').clone();
+          $tr.find('.p_id').html(p.ID);
+          $tr.find('.p_navn').val(p.Data.Name);
+          $tr.find('.p_epost').val(p.Data.Email);
+          $tr.find('.select-avd').val('avd-'+p.Data.Department);
+          $tr.find('.p_bilde').val(p.Data.Img);
+          $tr.removeClass('invisible');
+          $('.p_eksisterende').append($tr);
+        });
+      });
+
       // Enable 'legg til ny ansatt' button when name+email fields are filled.
       $('.p_ny input').on('keyup',  function() {
         var navn = $('.p_ny').find('.p_navn:first').val();

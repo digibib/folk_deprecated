@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 	"time"
 
@@ -126,7 +128,13 @@ func createPerson(u *url.URL, h http.Header, rq *PersonRequest) (int, http.Heade
 	id := persons.Create(&b)
 	person, err := persons.Get(id)
 	if err != nil {
+		log.Println(err)
 		return http.StatusInternalServerError, nil, nil, errors.New("failed to save person to database")
+	}
+	err = persons.Dump("./data/folk.db")
+	if err != nil {
+		log.Println(err)
+		return http.StatusInternalServerError, nil, nil, errors.New("failed to save database")
 	}
 	return http.StatusCreated, http.Header{
 		"Content-Location": {fmt.Sprintf(
@@ -176,8 +184,26 @@ func getAllDepartments(u *url.URL, h http.Header, _ interface{}) (int, http.Head
 		nil
 }
 
-// GET /person?q="searchterm"
+// GET /person?q="searchterm" or /person?page=x
 func searchPerson(u *url.URL, h http.Header, _ interface{}) (int, http.Header, *SeveralItemsResponse, error) {
+	// fetch persons for admin listing
+	page := u.Query().Get("page")
+	if page != "" {
+		t0 := time.Now()
+		all := persons.all.ToSlice()
+		sort.Sort(sort.Reverse(sort.IntSlice(all)))
+		max := 10
+		if len(all) < 10 {
+			max = len(all)
+		}
+		return http.StatusOK, nil, &SeveralItemsResponse{
+				Count:  len(all[0:max]),
+				TimeMs: float64(time.Now().Sub(t0)) / 1000,
+				Hits:   persons.GetSeveral(all[0:max])},
+			nil
+	}
+
+	// search
 	q := u.Query().Get("q")
 	if q == "" {
 		return http.StatusBadRequest, nil, nil, errors.New("search query missing (q)")

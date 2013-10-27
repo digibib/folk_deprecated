@@ -122,9 +122,11 @@ func adminHandler(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Departments []depts
 		Images      []string
+		NumFolks    int
 	}{
 		deptHierarchy(departments),
 		imageFiles,
+		persons.Size(),
 	}
 	err = templates.ExecuteTemplate(w, "admin.html", data)
 	if err != nil {

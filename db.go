@@ -135,4 +135,25 @@ func (db *DB) Dump(fname string) error {
 	return err
 }
 
-// func (db *DB) GetSeveral(docs Intset) []byte
+// GetSeveral fetches several docs from db, as requested by slice of IDs.
+func (db *DB) GetSeveral(docs []int) []byte {
+	var sevDocs bytes.Buffer
+	sevDocs.Write([]byte("["))
+	db.RLock()
+	defer db.RUnlock()
+	size := len(docs)
+	i := 0
+	for _, k := range docs {
+		if b, ok := db.docs[k]; ok {
+			sevDocs.Write([]byte(fmt.Sprintf("{\"ID\":%v,\"Data\":", k)))
+			sevDocs.Write(b)
+			sevDocs.Write([]byte("}"))
+			i++
+			if i != size { // to avoid a trailing comma after last doc
+				sevDocs.Write([]byte(","))
+			}
+		}
+	}
+	sevDocs.Write([]byte("]"))
+	return sevDocs.Bytes()
+}

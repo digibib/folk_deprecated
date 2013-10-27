@@ -22,7 +22,9 @@ a:hover { text-decoration: underline; cursor:pointer;}
 .search { padding: 2px; margin-right: 2em; width: 16em;}
 .edit-m { width: 6em; margin: 0 1em 4px 0; }
 .edit-l { margin-top:4px;}
-.folk_table { font-size:0.8em;}
+.folk_table { font-size:0.8em; width: 100%;}
+.td-short { width: 30px;}
+.td-medium { width: 200px;}
 .p_ny { line-height: 3em; background: #FEDF00;}
 .p_eksisterende tr:nth-child(even) { background-color: #eee;}
 th { text-align: left;}
