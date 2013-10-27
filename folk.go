@@ -3,18 +3,26 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 
+	"github.com/gorilla/securecookie"
+	"github.com/gorilla/sessions"
 	"github.com/rcrowley/go-tigertonic"
 )
 
 var (
-	templates            = template.Must(template.ParseFiles("data/html/folk.html", "data/html/admin.html"))
+	templates = template.Must(template.ParseFiles(
+		"data/html/folk.html",
+		"data/html/admin.html",
+		"data/html/login.html"))
 	mux                  *tigertonic.TrieServeMux
 	departments, persons *DB
 	err                  error
+	store                *sessions.CookieStore
+	username, password   *string
 )
 
 type dept struct {
@@ -70,6 +78,9 @@ func deptHierarchy(db *DB) []depts {
 	}
 	return r
 }
+
+// Handlers:
+
 func mainHandler(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Departments []depts
@@ -83,15 +94,62 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminHandler(w http.ResponseWriter, r *http.Request) {
+	session, err := store.Get(r, "folke_sjef")
+	if err != nil {
+		// cookie found, but couldn't decode it
+		log.Printf("%v", err)
+	}
+	if session.IsNew {
+		loginHandler(w, r)
+		return
+	}
+
 	data := struct {
 		Departments []depts
 	}{
 		deptHierarchy(departments),
 	}
-	err := templates.ExecuteTemplate(w, "admin.html", data)
+	err = templates.ExecuteTemplate(w, "admin.html", data)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+	err = templates.ExecuteTemplate(w, "login.html", nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func authHandler(w http.ResponseWriter, r *http.Request) {
+	u := r.FormValue("username")
+	p := r.FormValue("password")
+	if u == *username && p == *password {
+		session := initSession(r)
+		err := session.Save(r, w)
+		if err != nil {
+			log.Printf("%v", err)
+		}
+		fmt.Fprint(w, "OK")
+		return
+	}
+	http.Error(w, "feil brukernavn eller passord", http.StatusUnauthorized)
+}
+
+func initSession(r *http.Request) *sessions.Session {
+	session, err := store.Get(r, "folke_sjef")
+	if err != nil {
+		// cookie found, but couldn't decode it
+		log.Printf("%v", err)
+	}
+	if session.IsNew {
+		session.Options.Path = "/admin"
+		session.Options.MaxAge = 0
+		session.Options.HttpOnly = true
+		session.Options.Secure = true
+	}
+	return session
 }
 
 // serveFile serves a single file from disk.
@@ -102,6 +160,7 @@ func serveFile(filename string) func(w http.ResponseWriter, r *http.Request) {
 }
 
 func init() {
+	// Load DBs or create new if they don't exist
 	departments, err = NewFromFile("data/avd.db")
 	if err != nil {
 		departments = New(32)
@@ -110,12 +169,17 @@ func init() {
 	if err != nil {
 		persons = New(256)
 	}
-	setupAPIRouting() // apiMux
+
+	// HTTP routing
 	mux = tigertonic.NewTrieServeMux()
 	mux.HandleFunc(
 		"GET",
 		"/",
 		mainHandler)
+	mux.HandleFunc(
+		"POST",
+		"/authenticate",
+		authHandler)
 	mux.HandleFunc(
 		"GET",
 		"/admin",
@@ -128,14 +192,24 @@ func init() {
 		"GET",
 		"/css/styles.css",
 		serveFile("data/css/styles.css"))
+
 	mux.HandleNamespace("/data/img", http.FileServer(http.Dir("data/img/")))
+
+	setupAPIRouting() // apiMux
 	mux.HandleNamespace("/api", apiMux)
+
 	tigertonic.SnakeCaseHTTPEquivErrors = true
 }
 
 func main() {
 	port := flag.String("port", "9999", "serve from this port")
+	username = flag.String("u", "admin", "admin username")
+	password = flag.String("p", "secret", "admin password")
+
 	flag.Parse()
+
+	store = sessions.NewCookieStore(securecookie.GenerateRandomKey(32), securecookie.GenerateRandomKey(32))
+
 	server := tigertonic.NewServer(":"+*port, mux)
 	log.Fatal(server.ListenAndServe())
 }

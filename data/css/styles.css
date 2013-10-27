@@ -6,6 +6,7 @@ article,aside,details,figcaption,figure,footer,header,hgroup,main,nav,section,su
 
 #container { width: 100%; margin:auto;}
 body { font-family: Arial; }
+label { font-weight: bold;}
 .russekort { margin: 0 0 2em; position:relative; }
 .russeinfo { line-height:1.7em; font-size:0.95em;}
 .inactive:hover { background: #eee;}
@@ -21,6 +22,15 @@ a:hover { text-decoration: underline; cursor:pointer;}
 .search { padding: 2px; margin-right: 2em; width: 16em;}
 .edit-m { width: 6em; margin: 0 1em 4px 0; }
 .edit-l { margin-top:4px;}
+.folk_table { font-size:0.8em;}
+.p_ny { line-height: 3em; background: #FEDF00;}
+.p_eksisterende tr:nth-child(odd) { background-color: #eee;}
+th { text-align: left;}
+td { padding-right: 1em;}
+.td-info { width: 200px;}
+button { margin-right: 1em;}
+.error { color: red;}
+
 @media only screen
 and (min-width : 768px) {
 	.logo { display: inline-block;}

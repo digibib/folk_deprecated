@@ -1,0 +1,61 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>folk</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+</head>
+
+<body>
+
+  <div class="grid" id="container">
+    <div class="menu grid_field-unit">
+      <form method="post" action="/authenticate">
+        <label>brukernavn: <input id="username" type="text"></label>
+        <label>passord: <input id="password" type="password"></label>
+        <button type="submit" disabled="disabled" id="log-in">Logg inn</button>
+        <span class="error" id="login-info"></span>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    $("document").ready(function() {
+      // Disable login until both username & password are entered
+      $('input').on('keyup', function() {
+        var u = $('#username').val();
+        var p = $('#password').val();
+        if (u !== "" && p !== "" ) {
+          $('#log-in').prop('disabled', false);
+        } else {
+          $('#log-in').prop('disabled', true);
+        }
+      });
+
+      // Authenticate
+      $("#log-in").on('click', function(event) {
+        event.preventDefault();
+        var req = $.ajax({
+          url: '/authenticate',
+          type: 'POST',
+          data: {
+            username: $('#username').val(),
+            password: $('#password').val()
+          }
+        });
+
+        req.done(function(data) {
+          window.location.replace("/admin");
+        });
+
+        req.fail(function(jqXHR, textStatus, errThrown) {
+          $('#login-info').html(jqXHR.responseText);
+        });
+
+      });
+    });
+  </script>
+</body>
+</html>

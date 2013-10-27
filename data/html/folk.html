@@ -14,12 +14,12 @@
     <div class="menu grid_field-unit">
         <span class="logo"><strong>folk.deichman.no</strong></span>
         <input class="search" type="text" placeholder="søk" />
-        <select id="select-avd">
+        <select class="select-avd">
           <option value="avd-alle">Hele Deichman</option>
           {{range $p := .Departments}}
           <option value="avd-{{$p.ID}}">{{$p.Name}}</option>
             {{range $d := $p.Depts}}
-            <option value="avd-{{$p.ID}} avd-{{$d.ID}}">--{{$d.Name}}</option>
+            <option value="avd-{{$p.ID}} avd-{{$d.ID}}">&nbsp;&nbsp;{{$d.Name}}</option>
             {{end}}
           {{end}}
         </select>
@@ -91,15 +91,15 @@
 
   <script>
     $("document").ready(function() {
-      $('#select-avd').on('change', function() {
-        var selected = $('#select-avd').val();
+      $('.select-avd').on('change', function() {
+        var selected = $('.select-avd').val();
         if (selected === 'avd-alle') {
           $('.russekort').show();
         } else {
           $('.russekort').hide();
           $('.'+selected).show();
         }
-      })
+      });
     });
   </script>
 </body>

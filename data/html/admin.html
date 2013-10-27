@@ -10,11 +10,89 @@
 
 <body>
 
-  <p> hei admin </p>
+  <div class="grid" id="container">
+    <div class="menu grid_field-unit">
+        <span class="logo"><strong>folk.deichman.no</strong></span>
+        <input class="search" type="text" placeholder="søk" />
+        <select class="select-avd">
+          <option value="avd-alle">Hele Deichman</option>
+          {{range $p := .Departments}}
+          <option value="avd-{{$p.ID}}">{{$p.Name}}</option>
+            {{range $d := $p.Depts}}
+            <option value="avd-{{$p.ID}} avd-{{$d.ID}}">&nbsp;&nbsp;{{$d.Name}}</option>
+            {{end}}
+          {{end}}
+        </select>
+    </div>
+
+    <div class="grid_field-unit">
+      <table class="folk_table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Navn</th>
+            <th>E-post</th>
+            <th>Avdeling</th>
+            <th>Bilde</th>
+            <th>Endringer</th>
+            <th class="td-info"></th>
+          </tr>
+        </thead>
+        <tbody class="p_ny">
+          <tr>
+            <td></td>
+            <td><input class="p_navn" type="text" placeholder="navn"/></td>
+            <td><input class="p_epost" type="text" placeholder="e-post adresse"></td>
+            <td>
+              <select class="select-avd">
+                {{range $p := .Departments}}
+                <option value="avd-{{$p.ID}}">{{$p.Name}}</option>
+                  {{range $d := $p.Depts}}
+                  <option value="avd-{{$p.ID}} avd-{{$d.ID}}">&nbsp;&nbsp;{{$d.Name}}</option>
+                  {{end}}
+                {{end}}
+              </select>
+            </td>
+            <td><button>Last opp</button></td>
+            <td><button disabled="disabled">Legg til ny ansatt</button></td>
+            <td></td>
+          </tr>
+        </tbody>
+
+        <tbody class="p_eksisterende">
+          <tr>
+            <td>1</td>
+            <td><input class="p_navn" type="text" placeholder="navn" value="Petter Goks" /></td>
+            <td><input class="p_epost" type="text" placeholder="e-post adresse" value="petter@dott.com" /></td>
+            <td>
+              <select class="select-avd">
+                {{range $p := .Departments}}
+                <option value="avd-{{$p.ID}}">{{$p.Name}}</option>
+                  {{range $d := $p.Depts}}
+                  <option value="avd-{{$p.ID}} avd-{{$d.ID}}">&nbsp;&nbsp;{{$d.Name}}</option>
+                  {{end}}
+                {{end}}
+              </select>
+            </td>
+            <td><a href="/data/img/putin.jpg">putin.jpg</a></td>
+            <td><button class="p_lagre" disabled="disabled">Lagre</button><button class="p_slett">Slett</button></td>
+            <td class="td-info"></td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+  </div>
 
   <script>
     $("document").ready(function() {
-      console.log("start");
+      $(".folk_table").on('click', '.p_slett', function() {
+          if ( ! window.confirm("Er du sikker?") ) {
+          return;
+        }
+        $(this).parents("tr").find(".td-info").html('<img src="/data/img/loading.gif">');
+        console.log("sletta");
+      });
     });
   </script>
 </body>
