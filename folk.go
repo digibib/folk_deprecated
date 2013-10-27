@@ -16,7 +16,7 @@ import (
 	"github.com/rcrowley/go-tigertonic"
 )
 
-const MAX_IMG_SIZE = 1 * 1024 * 1024 // 1 MB
+const MAX_MEM_SIZE = 2 * 1024 * 1024 // 2 MB
 
 var (
 	templates = template.Must(template.ParseFiles(
@@ -169,7 +169,7 @@ func createSession(r *http.Request) *sessions.Session {
 }
 
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseMultipartForm(MAX_IMG_SIZE); err != nil {
+	if err := r.ParseMultipartForm(MAX_MEM_SIZE); err != nil {
 		log.Println(err)
 		http.Error(w, err.Error(), http.StatusForbidden)
 	}
