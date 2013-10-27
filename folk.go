@@ -94,15 +94,15 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminHandler(w http.ResponseWriter, r *http.Request) {
-	session, err := store.Get(r, "folke_sjef")
-	if err != nil {
-		// cookie found, but couldn't decode it
-		log.Printf("%v", err)
-	}
-	if session.IsNew {
-		loginHandler(w, r)
-		return
-	}
+	// session, err := store.Get(r, "folke_sjef")
+	// if err != nil {
+	// 	// cookie found, but couldn't decode it
+	// 	log.Printf("%v", err)
+	// }
+	// if session.IsNew {
+	// 	loginHandler(w, r)
+	// 	return
+	// }
 
 	data := struct {
 		Departments []depts
@@ -126,7 +126,7 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 	u := r.FormValue("username")
 	p := r.FormValue("password")
 	if u == *username && p == *password {
-		session := initSession(r)
+		session := createSession(r)
 		err := session.Save(r, w)
 		if err != nil {
 			log.Printf("%v", err)
@@ -137,16 +137,15 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "feil brukernavn eller passord", http.StatusUnauthorized)
 }
 
-func initSession(r *http.Request) *sessions.Session {
+func createSession(r *http.Request) *sessions.Session {
 	session, err := store.Get(r, "folke_sjef")
 	if err != nil {
-		// cookie found, but couldn't decode it
 		log.Printf("%v", err)
 	}
 	if session.IsNew {
 		session.Options.Path = "/admin"
 		session.Options.MaxAge = 0
-		session.Options.HttpOnly = true
+		session.Options.HttpOnly = false
 		session.Options.Secure = true
 	}
 	return session

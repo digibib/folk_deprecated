@@ -46,8 +46,10 @@
           }
         });
 
-        req.done(function(data) {
-          window.location.replace("/admin");
+        req.done(function(data, textStatus, XMLHttpRequest) {
+          console.log(XMLHttpRequest);
+
+          //window.location.replace("/admin");
         });
 
         req.fail(function(jqXHR, textStatus, errThrown) {
