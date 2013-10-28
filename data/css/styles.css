@@ -14,7 +14,7 @@ label { font-weight: bold;}
 .russebilde { float: left; height: 150px; margin-right: 1em;}
 .edit { visibility:hidden; position: absolute; right:4px; bottom:0px; font-family:monospace; font-size:0.8em;}
 a { color: blue; }
-a:hover { text-decoration: underline; cursor:pointer;}
+a:hover { text-decoration: underline; cursor:pointer; text-decoration: none;}
 .edit-actions { text-align: right; font-family: monospace;}
 .inactive:hover .edit { visibility: visible;}
 .menu { font-family: monospace; background:#ccc; line-height: 2rem; margin-bottom: 1em;}
