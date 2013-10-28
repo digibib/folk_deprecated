@@ -164,6 +164,7 @@ func updatePerson(u *url.URL, h http.Header, rq *PersonRequest) (int, http.Heade
 		return http.StatusInternalServerError, nil, nil, errors.New("failed to marshal JSON")
 	}
 	persons.Set(id, &b)
+	person, _ = persons.Get(id)
 	folkSaver.Inc()
 	return http.StatusOK, nil, &PersonResponse{id, *person}, nil
 }
