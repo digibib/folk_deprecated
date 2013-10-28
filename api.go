@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/rcrowley/go-tigertonic"
@@ -66,6 +67,10 @@ func setupAPIRouting() {
 		"PATCH",
 		"/person/{id}",
 		tigertonic.Marshaled(updatePerson))
+	apiMux.HandleFunc(
+		"DELETE",
+		"/person/{id}",
+		deletePerson)
 	apiMux.Handle(
 		"GET",
 		"/department",
@@ -181,6 +186,23 @@ func getPerson(u *url.URL, h http.Header, _ interface{}) (int, http.Header, *Per
 		return http.StatusNotFound, nil, nil, errors.New("person not found")
 	}
 	return http.StatusOK, nil, &PersonResponse{id, *person}, nil
+}
+
+// DELETE /person/{id}
+func deletePerson(w http.ResponseWriter, r *http.Request) {
+	idStr := strings.TrimPrefix(r.URL.Path, "/person/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "person ID must be an integer", http.StatusBadRequest)
+		return
+	}
+	_, err = persons.Get(id)
+	if err != nil {
+		http.Error(w, "person not found", http.StatusBadRequest)
+	}
+	persons.Del(id)
+	folkSaver.Inc()
+	fmt.Fprint(w, "OK")
 }
 
 // GET /department/{id}

@@ -102,6 +102,18 @@ func (db *DB) Set(id int, data *[]byte) {
 	}
 }
 
+// Set removes a document. Return false if doc doesn't exist. Otherwise true.
+func (db *DB) Del(id int) bool {
+	db.Lock()
+	defer db.Unlock()
+	if _, ok := db.docs[id]; ok {
+		delete(db.docs, id)
+		db.all.Remove(id)
+		return true
+	}
+	return false
+}
+
 // All retuns all the docs in the database as a JSON array, in the form:
 // [{"ID": 1, "Data": {jsonData}},{..},{..}]
 func (db *DB) All() []byte {

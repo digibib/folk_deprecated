@@ -96,7 +96,6 @@
     $("document").ready(function() {
       // Populate table
       $.getJSON("/api/person?page=1", function(data) {
-        console.log(data);
         $.each(data.Hits, function(i, p) {
           var $tr = $('.p_eksisterende tr:first').clone();
           $tr.find('.p_id').html(p.ID);
@@ -107,6 +106,9 @@
           $tr.removeClass('invisible');
           $('.p_eksisterende').append($tr);
         });
+      });
+      $('.folk_table').on('hover', 'select option', function(){
+              console.log( 'Hover on:' + $(this).html());
       });
 
       // Enable 'legg til ny ansatt' button when name+email fields are filled.
@@ -164,8 +166,21 @@
           if ( ! window.confirm("Er du sikker?") ) {
           return;
         }
-        $(this).parents("tr").find(".td-info").html('<img src="/data/img/loading.gif">');
-        console.log("sletta");
+        var $tr = $(this).parents("tr");
+        $tr.find(".td-info").html('<img src="/data/img/loading.gif">');
+        var id = $tr.find('.p_id').html();
+        req = $.ajax({
+          url: '/api/person/'+ id,
+          type: 'DELETE'
+        });
+
+        req.done(function(data, textStatus, XMLHttpRequest) {
+          $tr.remove();
+        });
+
+        req.fail(function(jqXHR, textStatus, errThrown) {
+          $tr.find('.td-info').html(jqXHR.responseJSON.description);
+        });
       });
 
       // Save person

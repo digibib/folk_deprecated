@@ -56,6 +56,15 @@ func TestCRUD(t *testing.T) {
 	err = json.Unmarshal(*data, &b)
 	s.Expect(b.Issued, 1894)
 
+	// delete
+	book4, err := json.Marshal(Book{"abc", "xyz", 1999})
+	s.ExpectNilFatal(err)
+	id3 := db.Create(&book4)
+	s.Expect(db.Size(), 3)
+	db.Del(id3)
+	s.Expect(db.Size(), 2)
+	s.Expect(db.Del(id3), false) // allready deleted
+
 	// get all docs
 	type all []struct {
 		ID   int
