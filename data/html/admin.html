@@ -12,7 +12,7 @@
 
   <div class="grid" id="container">
     <div class="menu grid_field-unit">
-        <span class="logo"><strong><a href="/">folk.deichman.no</a></strong></span>
+        <a class="logo" href="/">folk.deichman.no</a>
         <input class="search" type="text" placeholder="søk" />
         <select class="select-avd">
           <option value="avd-alle">Hele Deichman</option>
@@ -167,6 +167,45 @@
         console.log("sletta");
       });
 
+      // Save person
+      $(".folk_table").on('click', '.p_lagre', function() {
+        var $tr = $(this).parents("tr");
+        $tr.find(".td-info").html('<img src="/data/img/loading.gif">');
+        var dept = parseInt($tr.find('select option:selected').val().substr(4));
+        var id = $tr.find('.p_id').html();
+        var req = $.ajax({
+          url: '/api/person/'+id,
+          type: 'PATCH',
+          contentType: "application/json; charset=utf-8",
+          data: JSON.stringify({
+            Name: $tr.find('.p_navn').val(),
+            Email: $tr.find('.p_epost').val(),
+            Department: dept,
+            Img: $tr.find('.p_bilde').val().split(/\\|\//).pop() // Split on \|/ to get only filname without path
+          }),
+          dataType: 'json'
+        });
+
+        req.done(function(data, textStatus, XMLHttpRequest) {
+          console.log(data);
+          $tr.find('.td-info').html("OK, lagret.");
+        });
+
+        req.fail(function(jqXHR, textStatus, errThrown) {
+          $tr.find('.td-info').html(jqXHR.responseJSON.description);
+        });
+      });
+
+      //
+      $(".folk_table").on('keyup', 'input', function() {
+        var $tr = $(this).parents("tr");
+        if ( $tr.find('.p_navn').val() === "" || $tr.find('.p_epost').val() === "" ) {
+          $tr.find('.p_lagre').prop("disabled", true);
+        } else {
+          $tr.find('.p_lagre').prop("disabled", false);
+        }
+      });
+
       // upload file
       $('#p_ny_fil').on('change', function(e) {
         var file = this.files[0];
@@ -199,6 +238,12 @@
         xhr.onreadystatechange = function(e) {
             if ( 4 == this.readyState ) {
                 $('.p_ny').find('.td-info').html('100% OK');
+                // add filename to dropdowns
+                $('.p_bilde option[value="'+file.name +'"]');
+                $('.p_bilde').append($('<option>', {
+                  value: file.name,
+                  text: file.name
+                }));
             }
         };
         xhr.open('post', "/upload", true);

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"sync"
 
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
@@ -29,6 +30,7 @@ var (
 	store                *sessions.CookieStore
 	username, password   *string
 	imageFileNames       = regexp.MustCompile(`(\.png|\.jpg|\.jpeg)$`)
+	folkSaver            *saver
 )
 
 type dept struct {
@@ -53,6 +55,29 @@ type person struct {
 	Img   string
 	Phone string
 	Info  string
+}
+
+// saver saves the db after X edits has ben made
+type saver struct {
+	sync.Mutex
+	db    *DB
+	file  string
+	count int
+	max   int
+}
+
+func (s *saver) Inc() {
+	s.Lock()
+	defer s.Unlock()
+	s.count++
+	if s.count == s.max {
+		log.Printf("Saving db: %s", s.file)
+		err := s.db.Dump(s.file)
+		if err != nil {
+			log.Println(err)
+		}
+		s.count = 0
+	}
 }
 
 func deptHierarchy(db *DB) []depts {
@@ -176,10 +201,11 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusForbidden)
 	}
 
-	for key, value := range r.MultipartForm.Value {
-		fmt.Fprintf(w, "%s:%s ", key, value)
-		log.Printf("%s:%s", key, value)
-	}
+	// Currently not used, but possible to handle all info in one post
+	// for key, value := range r.MultipartForm.Value {
+	// 	fmt.Fprintf(w, "%s:%s ", key, value)
+	// 	log.Printf("%s:%s", key, value)
+	// }
 
 	for _, fileHeaders := range r.MultipartForm.File {
 		for _, fileHeader := range fileHeaders {
@@ -208,6 +234,7 @@ func init() {
 	if err != nil {
 		persons = New(256)
 	}
+	folkSaver = &saver{db: persons, file: "./data/folk.db", max: 15}
 
 	// HTTP routing
 	mux = tigertonic.NewTrieServeMux()

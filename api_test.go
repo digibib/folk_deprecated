@@ -83,6 +83,30 @@ func TestApiCRUD(t *testing.T) {
 	s.ExpectNilFatal(err)
 	s.ExpectMatches(string(body), "\"Count\":2")
 
+	var testsPATCH = []struct {
+		url       string
+		body      string
+		respCode  int
+		bodyMatch string
+	}{
+		{"/person/1", `{"Name":"Mr. Q"}`, 200, `"Name":"Mr. Q"`},
+	}
+
+	for _, tt := range testsPATCH {
+		req, err := http.NewRequest("PATCH", testServer.URL+tt.url, bytes.NewBufferString(tt.body))
+		s.ExpectNilFatal(err)
+		req.Header.Add("Content-Type", "application/json")
+		resp, err := http.DefaultClient.Do(req)
+		s.ExpectNilFatal(err)
+		s.Expect(tt.respCode, resp.StatusCode)
+		body, err := ioutil.ReadAll(resp.Body)
+		s.ExpectNilFatal(err)
+		r := regexp.MustCompile(tt.bodyMatch)
+		if !r.MatchString(string(body)) {
+			t.Errorf("expected response body to match \"%v\"\ngot body:\n\"%v\"", tt.bodyMatch, string(body))
+		}
+	}
+
 	// resp, err = http.Get(testServer.URL + "/person?q=\"Mr\"")
 	// s.ExpectNilFatal(err)
 	// s.Expect(200, resp.StatusCode)

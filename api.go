@@ -63,6 +63,10 @@ func setupAPIRouting() {
 		"/person",
 		tigertonic.Marshaled(createPerson))
 	apiMux.Handle(
+		"PATCH",
+		"/person/{id}",
+		tigertonic.Marshaled(updatePerson))
+	apiMux.Handle(
 		"GET",
 		"/department",
 		tigertonic.Marshaled(getAllDepartments))
@@ -97,6 +101,7 @@ func createDepartment(u *url.URL, h http.Header, rq *DepartmentRequest) (int, ht
 	if err != nil {
 		return http.StatusInternalServerError, nil, nil, errors.New("failed to save Department to database")
 	}
+	folkSaver.Inc()
 	return http.StatusCreated, http.Header{
 		"Content-Location": {fmt.Sprintf(
 			"%s://%s/api/department/%s",
@@ -131,11 +136,7 @@ func createPerson(u *url.URL, h http.Header, rq *PersonRequest) (int, http.Heade
 		log.Println(err)
 		return http.StatusInternalServerError, nil, nil, errors.New("failed to save person to database")
 	}
-	err = persons.Dump("./data/folk.db")
-	if err != nil {
-		log.Println(err)
-		return http.StatusInternalServerError, nil, nil, errors.New("failed to save database")
-	}
+	folkSaver.Inc()
 	return http.StatusCreated, http.Header{
 		"Content-Location": {fmt.Sprintf(
 			"%s://%s/api/person/%s",
@@ -144,6 +145,27 @@ func createPerson(u *url.URL, h http.Header, rq *PersonRequest) (int, http.Heade
 			id,
 		)},
 	}, &PersonResponse{id, *person}, nil
+}
+
+// PATCH /person/{id}
+func updatePerson(u *url.URL, h http.Header, rq *PersonRequest) (int, http.Header, *PersonResponse, error) {
+	idStr := u.Query().Get("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return http.StatusBadRequest, nil, nil, errors.New("person ID must be an integer")
+	}
+	person, err := persons.Get(id)
+	if err != nil {
+		return http.StatusNotFound, nil, nil, errors.New("person not found")
+	}
+	p := PersonRequest{Name: rq.Name, Department: rq.Department, Email: rq.Email, Img: rq.Img}
+	b, err := json.Marshal(p)
+	if err != nil {
+		return http.StatusInternalServerError, nil, nil, errors.New("failed to marshal JSON")
+	}
+	persons.Set(id, &b)
+	folkSaver.Inc()
+	return http.StatusOK, nil, &PersonResponse{id, *person}, nil
 }
 
 // GET /person/{id}
@@ -192,8 +214,8 @@ func searchPerson(u *url.URL, h http.Header, _ interface{}) (int, http.Header, *
 		t0 := time.Now()
 		all := persons.all.ToSlice()
 		sort.Sort(sort.Reverse(sort.IntSlice(all)))
-		max := 10
-		if len(all) < 10 {
+		max := 20
+		if len(all) < 20 {
 			max = len(all)
 		}
 		return http.StatusOK, nil, &SeveralItemsResponse{
