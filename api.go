@@ -31,16 +31,6 @@ type PersonResponse struct {
 	Data json.RawMessage
 }
 
-type DepartmentRequest struct {
-	Name   string
-	Parent int
-}
-
-type DepartmentResponse struct {
-	ID   int
-	Data json.RawMessage
-}
-
 type SeveralItemsResponse struct {
 	Count  int
 	TimeMs float64
@@ -81,50 +71,6 @@ func setupAPIRouting() {
 		"DELETE",
 		"/person/{id}",
 		deletePerson)
-	apiMux.Handle(
-		"GET",
-		"/department",
-		tigertonic.Marshaled(getAllDepartments))
-	apiMux.Handle(
-		"GET",
-		"/department/{id}",
-		tigertonic.Marshaled(getDepartment))
-	apiMux.Handle(
-		"POST",
-		"/department",
-		tigertonic.Marshaled(createDepartment))
-}
-
-// POST /department
-func createDepartment(u *url.URL, h http.Header, rq *DepartmentRequest) (int, http.Header, *DepartmentResponse, error) {
-	if rq.Name == "" {
-		return http.StatusBadRequest, nil, nil, errors.New("required parameters: name")
-	}
-	if rq.Parent != 0 {
-		_, err := departments.Get(rq.Parent)
-		if err != nil {
-			return http.StatusBadRequest, nil, nil, errors.New("parent department doesn't exist")
-		}
-	}
-	p := DepartmentRequest{rq.Name, rq.Parent}
-	b, err := json.Marshal(p)
-	if err != nil {
-		return http.StatusInternalServerError, nil, nil, errors.New("failed to marshal JSON")
-	}
-	id := departments.Create(&b)
-	Department, err := departments.Get(id)
-	if err != nil {
-		return http.StatusInternalServerError, nil, nil, errors.New("failed to save Department to database")
-	}
-	folkSaver.Inc()
-	return http.StatusCreated, http.Header{
-		"Content-Location": {fmt.Sprintf(
-			"%s://%s/api/department/%s",
-			u.Scheme,
-			u.Host,
-			id,
-		)},
-	}, &DepartmentResponse{id, *Department}, nil
 }
 
 // POST /person
@@ -132,8 +78,7 @@ func createPerson(u *url.URL, h http.Header, rq *PersonRequest) (int, http.Heade
 	if rq.Department == 0 || rq.Name == "" || rq.Email == "" {
 		return http.StatusBadRequest, nil, nil, errors.New("required parameters: name, department, email")
 	}
-	dept, err := departments.Get(rq.Department)
-	if err != nil {
+	if _, ok := mapDepartments[rq.Department]; !ok {
 		return http.StatusBadRequest, nil, nil, errors.New("department doesn't exist")
 	}
 	img := rq.Img
@@ -155,9 +100,7 @@ func createPerson(u *url.URL, h http.Header, rq *PersonRequest) (int, http.Heade
 	folkSaver.Inc()
 	// index the person:
 	go func() {
-		var d DepartmentRequest
-		_ = json.Unmarshal(*dept, &d)
-		analyzer.Index(fmt.Sprintf("%v %v", rq.Name, d.Name), id)
+		analyzer.Index(fmt.Sprintf("%v %v", rq.Name, mapDepartments[rq.Department].Name), id)
 	}()
 
 	return http.StatusCreated, http.Header{
@@ -181,6 +124,9 @@ func updatePerson(u *url.URL, h http.Header, rq *PersonRequest) (int, http.Heade
 	if err != nil {
 		return http.StatusNotFound, nil, nil, errors.New("person not found")
 	}
+	if _, ok := mapDepartments[rq.Department]; !ok {
+		return http.StatusBadRequest, nil, nil, errors.New("department doesn't exist")
+	}
 	p := PersonRequest{Name: rq.Name, Department: rq.Department, Email: rq.Email, Img: rq.Img}
 	b, err := json.Marshal(p)
 	if err != nil {
@@ -197,9 +143,9 @@ func updatePerson(u *url.URL, h http.Header, rq *PersonRequest) (int, http.Heade
 		var p2 PersonRequest
 		_ = json.Unmarshal(*oldperson, &p2)
 		// 1. unindex old person:
-		analyzer.UnIndex(fmt.Sprintf("%v %v", p2.Name, "TODO"), id)
+		analyzer.UnIndex(fmt.Sprintf("%v %v", p2.Name, mapDepartments[p2.Department]), id)
 		// 2. index new person:
-		analyzer.Index(fmt.Sprintf("%v %v", rq.Name, "TODO"), id)
+		analyzer.Index(fmt.Sprintf("%v %v", rq.Name, mapDepartments[rq.Department]), id)
 
 	}()
 
@@ -235,30 +181,6 @@ func deletePerson(w http.ResponseWriter, r *http.Request) {
 	persons.Del(id)
 	folkSaver.Inc()
 	fmt.Fprint(w, "OK")
-}
-
-// GET /department/{id}
-func getDepartment(u *url.URL, h http.Header, _ interface{}) (int, http.Header, *DepartmentResponse, error) {
-	idStr := u.Query().Get("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		return http.StatusBadRequest, nil, nil, errors.New("department ID must be an integer")
-	}
-	dept, err := departments.Get(id)
-	if err != nil {
-		return http.StatusNotFound, nil, nil, errors.New("department not found")
-	}
-	return http.StatusOK, nil, &DepartmentResponse{id, *dept}, nil
-}
-
-// GET /department
-func getAllDepartments(u *url.URL, h http.Header, _ interface{}) (int, http.Header, *SeveralItemsResponse, error) {
-	t0 := time.Now()
-	return http.StatusOK, nil, &SeveralItemsResponse{
-			Count:  departments.Size(),
-			TimeMs: float64(time.Now().Sub(t0)) / 1000,
-			Hits:   departments.All()},
-		nil
 }
 
 // GET /person?q="searchterm" or /person?page=x

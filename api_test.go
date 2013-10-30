@@ -15,7 +15,10 @@ import (
 
 func TestApiCRUD(t *testing.T) {
 	persons = New(512)
-	departments = New(64)
+	mapDepartments = make(map[int]dept)
+	mapDepartments[1] = dept{1, "main", 0}
+	mapDepartments[2] = dept{2, "xyz", 1}
+
 	analyzer = ftx.NewStandardAnalyzer()
 	s := specs.New(t)
 
@@ -28,11 +31,6 @@ func TestApiCRUD(t *testing.T) {
 		respCode  int
 		bodyMatch string
 	}{
-		{"/department", "{\"name\": \"main\"}", 201, "\"Name\":\"main\""},
-		{"/department", "{}", 400, "required parameters: name"},
-		{"/department", "{zappa}", 400, "json.SyntaxError"},
-		{"/department", "{\"name\": \"æøå\", \"parent\": 2}", 400, "parent department doesn't exist"},
-		{"/department", "{\"name\": \"xyz\", \"parent\": 1}", 201, "\"Parent\":1"},
 		{"/person", "{\"name\": \"Mr. P\"}", 400, "required parameters: name, department, email"},
 		{"/person", "{\"department\": 1}", 400, "required parameters: name, department, email"},
 		{"/person", "{\"name\": \"Mr. P\", \"email\":\"a@b\", \"department\": 100}", 400, "department doesn't exist"},
@@ -61,9 +59,6 @@ func TestApiCRUD(t *testing.T) {
 	}{
 		{"/person/88", 404, "person not found"},
 		{"/person/jabba", 400, "person ID must be an integer"},
-		{"/department/zz", 400, "department ID must be an integer"},
-		{"/department/99", 404, "department not found"},
-		{"/department/2", 200, "\"Name\":\"xyz\""},
 	}
 
 	for _, tt := range testsGET {
@@ -78,20 +73,13 @@ func TestApiCRUD(t *testing.T) {
 		}
 	}
 
-	resp, err := http.Get(testServer.URL + "/department")
-	s.ExpectNilFatal(err)
-	s.Expect(200, resp.StatusCode)
-	body, err := ioutil.ReadAll(resp.Body)
-	s.ExpectNilFatal(err)
-	s.ExpectMatches(string(body), "\"Count\":2")
-
 	var testsPATCH = []struct {
 		url       string
 		body      string
 		respCode  int
 		bodyMatch string
 	}{
-		{"/person/1", `{"Name":"Mr. Q"}`, 200, `"Name":"Mr. Q"`},
+		{"/person/1", `{"Name":"Mr. Q", "Department":2}`, 200, `"Name":"Mr. Q"`},
 	}
 
 	for _, tt := range testsPATCH {
@@ -109,10 +97,10 @@ func TestApiCRUD(t *testing.T) {
 		}
 	}
 
-	resp, err = http.Get(testServer.URL + "/person?q=Mr")
+	resp, err := http.Get(testServer.URL + "/person?q=Mr")
 	s.ExpectNilFatal(err)
 	s.Expect(200, resp.StatusCode)
-	body, err = ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
 	s.ExpectNilFatal(err)
 	s.ExpectMatches(string(body), "Mr. Q")
 	s.ExpectMatches(string(body), "Mr. c")

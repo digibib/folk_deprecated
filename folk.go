@@ -16,6 +16,8 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/knakk/ftx"
 	"github.com/rcrowley/go-tigertonic"
+
+	"github.com/davecheney/profile"
 )
 
 const MAX_MEM_SIZE = 2 * 1024 * 1024 // 2 MB
@@ -25,14 +27,16 @@ var (
 		"data/html/folk.html",
 		"data/html/admin.html",
 		"data/html/login.html"))
-	mux                  *tigertonic.TrieServeMux
-	departments, persons *DB
-	err                  error
-	store                *sessions.CookieStore
-	username, password   *string
-	imageFileNames       = regexp.MustCompile(`(\.png|\.jpg|\.jpeg)$`)
-	folkSaver            *saver
-	analyzer             *ftx.Analyzer
+	mux                *tigertonic.TrieServeMux
+	persons            *DB
+	departments        []depts
+	mapDepartments     = make(map[int]dept)
+	err                error
+	store              *sessions.CookieStore
+	username, password *string
+	imageFileNames     = regexp.MustCompile(`(\.png|\.jpg|\.jpeg)$`)
+	folkSaver          *saver
+	analyzer           *ftx.Analyzer
 )
 
 type dept struct {
@@ -118,7 +122,7 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Departments []depts
 	}{
-		deptHierarchy(departments),
+		departments,
 	}
 	err := templates.ExecuteTemplate(w, "folk.html", data)
 	if err != nil {
@@ -151,7 +155,7 @@ func adminHandler(w http.ResponseWriter, r *http.Request) {
 		Images      []string
 		NumFolks    int
 	}{
-		deptHierarchy(departments),
+		departments,
 		imageFiles,
 		persons.Size(),
 	}
@@ -236,11 +240,20 @@ func init() {
 	// Search Analyzer & index
 	analyzer = ftx.NewNGramAnalyzer(2, 15)
 
-	// Load DBs or create new if they don't exist
-	departments, err = NewFromFile("data/avd.db")
-	if err != nil {
-		departments = New(32)
+	// load department db
+	deptsdb, err := NewFromFile("data/avd.db")
+	if err == nil {
+		departments = deptHierarchy(deptsdb)
+		for _, d := range departments {
+			mapDepartments[d.ID] = dept{d.ID, d.Name, d.Parent}
+			for _, dd := range d.Depts {
+				mapDepartments[dd.ID] = dept{dd.ID, dd.Name, dd.Parent}
+			}
+		}
 	}
+	fmt.Printf("%q", mapDepartments)
+
+	// Load person DB or create new if it doesn't exist
 	persons, err = NewFromFile("data/folk.db")
 	if err != nil {
 		persons = New(256)
@@ -286,6 +299,7 @@ func init() {
 }
 
 func main() {
+	defer profile.Start(profile.CPUProfile).Stop()
 	port := flag.String("port", "9999", "serve from this port")
 	username = flag.String("u", "admin", "admin username")
 	password = flag.String("p", "secret", "admin password")
