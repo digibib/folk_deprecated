@@ -245,7 +245,6 @@ func init() {
 			}
 		}
 	}
-	fmt.Printf("%q", mapDepartments)
 
 	// Load person DB or create new if it doesn't exist
 	persons, err = NewFromFile("data/folk.db")
