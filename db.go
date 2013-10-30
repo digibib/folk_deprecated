@@ -150,6 +150,9 @@ func (db *DB) Dump(fname string) error {
 // GetSeveral fetches several docs from db, as requested by slice of IDs.
 func (db *DB) GetSeveral(docs []int) []byte {
 	var sevDocs bytes.Buffer
+	if len(docs) == 0 {
+		return []byte("null") // JSON for empty array
+	}
 	sevDocs.Write([]byte("["))
 	db.RLock()
 	defer db.RUnlock()
