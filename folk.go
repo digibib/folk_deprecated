@@ -52,6 +52,13 @@ type depts struct {
 	Depts  []dept
 }
 
+type dbPerson struct {
+	ID   int
+	Data person
+}
+
+type allPersons []dbPerson
+
 type person struct {
 	ID         int
 	Name       string
@@ -226,8 +233,17 @@ func serveFile(filename string) func(w http.ResponseWriter, r *http.Request) {
 
 // indexDB indexes all searchable fields in the person database.
 func indexDB(db *DB, a *ftx.Analyzer) {
-	//all := persons.All()
-
+	all := db.All()
+	var allp allPersons
+	err = json.Unmarshal(all, &allp)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	for _, p := range allp {
+		fmt.Printf("%v: %v %v\n", p.ID, p.Data.Name, mapDepartments[p.Data.Department].Name)
+		a.Index(fmt.Sprintf("%v %v", p.Data.Name, mapDepartments[p.Data.Department].Name), p.ID)
+	}
 }
 
 func init() {
@@ -249,9 +265,10 @@ func init() {
 	// Load person DB or create new if it doesn't exist
 	persons, err = NewFromFile("data/folk.db")
 	if err != nil {
+		log.Println(err)
 		persons = New(256)
-		indexDB(persons, analyzer)
 	}
+	indexDB(persons, analyzer)
 
 	// Save DB to disk every 15 edits
 	folkSaver = &saver{db: persons, file: "./data/folk.db", max: 15}
