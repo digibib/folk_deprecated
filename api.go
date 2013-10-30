@@ -143,9 +143,9 @@ func updatePerson(u *url.URL, h http.Header, rq *PersonRequest) (int, http.Heade
 		var p2 PersonRequest
 		_ = json.Unmarshal(*oldperson, &p2)
 		// 1. unindex old person:
-		analyzer.UnIndex(fmt.Sprintf("%v %v", p2.Name, mapDepartments[p2.Department]), id)
+		analyzer.UnIndex(fmt.Sprintf("%v %v", p2.Name, mapDepartments[p2.Department].Name), id)
 		// 2. index new person:
-		analyzer.Index(fmt.Sprintf("%v %v", rq.Name, mapDepartments[rq.Department]), id)
+		analyzer.Index(fmt.Sprintf("%v %v", rq.Name, mapDepartments[rq.Department].Name), id)
 
 	}()
 
