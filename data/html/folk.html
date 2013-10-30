@@ -15,6 +15,7 @@
     <div class="menu grid_field-unit">
         <span class="logo"><strong>folk.deichman.no</strong></span>
         <input id="search" class="search" type="text" placeholder="søk" />
+        <input id="searched" type="hidden">
         <select class="select-avd">
           <option value="avd-alle">Hele Deichman</option>
           {{range $p := .Departments}}
@@ -71,6 +72,10 @@
       $('.russekort').remove();
      return;
    }
+   if (q === $('#searched').val() ) {
+    return;
+   }
+   $('#searched').val(q);
     $.getJSON("/api/person?q="+q, function(data) {
       if (data.Count == 0) {
         $('.russekort').remove();
@@ -104,7 +109,7 @@
         }
       });
 
-      $('#search').on('keyup', debounce(searchFolks, 50)); // only fire search after 50 ms
+      $('#search').on('keyup change', debounce(searchFolks, 50)); // only fire search after 50 ms
 
     });
   </script>
