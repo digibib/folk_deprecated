@@ -139,7 +139,6 @@
         });
 
         req.done(function(data, textStatus, XMLHttpRequest) {
-          console.log(data.Data);
           var $tr = $('.p_eksisterende tr:first').clone();
           $tr.find('.p_id').html(data.ID);
           $tr.find('.p_navn').val(data.Data.Name);

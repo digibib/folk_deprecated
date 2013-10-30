@@ -11,7 +11,7 @@ label { font-weight: bold;}
 .russeinfo { line-height:1.7em; font-size:0.95em;}
 .inactive:hover { background: #eee;}
 .active { background: #FEDF00;}
-.russebilde { float: left; height: 150px; margin-right: 1em;}
+.russebilde { float: left; width:110px; height: 150px; margin-right: 1em;}
 .edit { visibility:hidden; position: absolute; right:4px; bottom:0px; font-family:monospace; font-size:0.8em;}
 a { color: blue; }
 a:hover { text-decoration: underline; cursor:pointer; text-decoration: none;}
@@ -33,7 +33,8 @@ td { padding-right: 1em;}
 .td-info { min-width: 200px; }
 button { margin-right: 1em;}
 .error { color: red;}
-.invisible { display:none;}
+.invisible { display:none }
+.soonrussekort { display:none !important;}
 
 @media only screen
 and (min-width : 768px) {
