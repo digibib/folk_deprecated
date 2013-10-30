@@ -207,12 +207,6 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusForbidden)
 	}
 
-	// Currently not used, but possible to handle all info in one post
-	// for key, value := range r.MultipartForm.Value {
-	// 	fmt.Fprintf(w, "%s:%s ", key, value)
-	// 	log.Printf("%s:%s", key, value)
-	// }
-
 	for _, fileHeaders := range r.MultipartForm.File {
 		for _, fileHeader := range fileHeaders {
 			file, _ := fileHeader.Open()
