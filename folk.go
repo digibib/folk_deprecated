@@ -14,6 +14,7 @@ import (
 
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
+	"github.com/knakk/ftx"
 	"github.com/rcrowley/go-tigertonic"
 )
 
@@ -31,6 +32,7 @@ var (
 	username, password   *string
 	imageFileNames       = regexp.MustCompile(`(\.png|\.jpg|\.jpeg)$`)
 	folkSaver            *saver
+	analyzer             *ftx.Analyzer
 )
 
 type dept struct {
@@ -47,14 +49,14 @@ type depts struct {
 }
 
 type person struct {
-	ID    int
-	Name  string
-	Role  string
-	Dept  int
-	Email string
-	Img   string
-	Phone string
-	Info  string
+	ID         int
+	Name       string
+	Role       string
+	Department int
+	Email      string
+	Img        string
+	Phone      string
+	Info       string
 }
 
 // saver saves the db after X edits has ben made
@@ -224,7 +226,16 @@ func serveFile(filename string) func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// indexDB indexes all searchable fields in the person database.
+func indexDB(db *DB, a *ftx.Analyzer) {
+	//all := persons.All()
+
+}
+
 func init() {
+	// Search Analyzer & index
+	analyzer = ftx.NewNGramAnalyzer(2, 15)
+
 	// Load DBs or create new if they don't exist
 	departments, err = NewFromFile("data/avd.db")
 	if err != nil {
@@ -233,7 +244,10 @@ func init() {
 	persons, err = NewFromFile("data/folk.db")
 	if err != nil {
 		persons = New(256)
+		indexDB(persons, analyzer)
 	}
+
+	// Save DB to disk every 15 edits
 	folkSaver = &saver{db: persons, file: "./data/folk.db", max: 15}
 
 	// HTTP routing

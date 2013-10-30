@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/knakk/ftx"
 	"github.com/knakk/specs"
 	//"github.com/rcrowley/go-tigertonic"
 )
@@ -15,6 +16,7 @@ import (
 func TestApiCRUD(t *testing.T) {
 	persons = New(512)
 	departments = New(64)
+	analyzer = ftx.NewStandardAnalyzer()
 	s := specs.New(t)
 
 	testServer := httptest.NewServer(apiMux)
@@ -107,12 +109,12 @@ func TestApiCRUD(t *testing.T) {
 		}
 	}
 
-	// resp, err = http.Get(testServer.URL + "/person?q=\"Mr\"")
-	// s.ExpectNilFatal(err)
-	// s.Expect(200, resp.StatusCode)
-	// body, err = ioutil.ReadAll(resp.Body)
-	// s.ExpectNilFatal(err)
-	// s.ExpectMatches("Mr. P", string(body))
-	// s.ExpectMatches("Mr. c", string(body))
-	// s.ExpectNotMatches("bill", string(body))
+	resp, err = http.Get(testServer.URL + "/person?q=Mr")
+	s.ExpectNilFatal(err)
+	s.Expect(200, resp.StatusCode)
+	body, err = ioutil.ReadAll(resp.Body)
+	s.ExpectNilFatal(err)
+	s.ExpectMatches(string(body), "Mr. Q")
+	s.ExpectMatches(string(body), "Mr. c")
+	s.ExpectNotMatches(string(body), "bill")
 }

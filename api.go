@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/knakk/ftx/index"
+	"github.com/knakk/intset"
 	"github.com/rcrowley/go-tigertonic"
 )
 
@@ -43,6 +45,14 @@ type SeveralItemsResponse struct {
 	Count  int
 	TimeMs float64
 	Hits   json.RawMessage
+}
+
+func srAsIntSet(sr *index.SearchResults) intset.IntSet {
+	s := intset.New()
+	for _, h := range sr.Hits {
+		s.Add(h.ID)
+	}
+	return s
 }
 
 func init() {
@@ -122,7 +132,7 @@ func createPerson(u *url.URL, h http.Header, rq *PersonRequest) (int, http.Heade
 	if rq.Department == 0 || rq.Name == "" || rq.Email == "" {
 		return http.StatusBadRequest, nil, nil, errors.New("required parameters: name, department, email")
 	}
-	_, err := departments.Get(rq.Department)
+	dept, err := departments.Get(rq.Department)
 	if err != nil {
 		return http.StatusBadRequest, nil, nil, errors.New("department doesn't exist")
 	}
@@ -141,7 +151,15 @@ func createPerson(u *url.URL, h http.Header, rq *PersonRequest) (int, http.Heade
 		log.Println(err)
 		return http.StatusInternalServerError, nil, nil, errors.New("failed to save person to database")
 	}
+
 	folkSaver.Inc()
+	// index the person:
+	go func() {
+		var d DepartmentRequest
+		_ = json.Unmarshal(*dept, &d)
+		analyzer.Index(fmt.Sprintf("%v %v", rq.Name, d.Name), id)
+	}()
+
 	return http.StatusCreated, http.Header{
 		"Content-Location": {fmt.Sprintf(
 			"%s://%s/api/person/%s",
@@ -159,7 +177,7 @@ func updatePerson(u *url.URL, h http.Header, rq *PersonRequest) (int, http.Heade
 	if err != nil {
 		return http.StatusBadRequest, nil, nil, errors.New("person ID must be an integer")
 	}
-	person, err := persons.Get(id)
+	oldperson, err := persons.Get(id)
 	if err != nil {
 		return http.StatusNotFound, nil, nil, errors.New("person not found")
 	}
@@ -169,9 +187,23 @@ func updatePerson(u *url.URL, h http.Header, rq *PersonRequest) (int, http.Heade
 		return http.StatusInternalServerError, nil, nil, errors.New("failed to marshal JSON")
 	}
 	persons.Set(id, &b)
-	person, _ = persons.Get(id)
+	newperson, err := persons.Get(id)
+	if err != nil {
+		return http.StatusInternalServerError, nil, nil, errors.New("failed to store in database")
+	}
+
 	folkSaver.Inc()
-	return http.StatusOK, nil, &PersonResponse{id, *person}, nil
+	go func() {
+		var p2 PersonRequest
+		_ = json.Unmarshal(*oldperson, &p2)
+		// 1. unindex old person:
+		analyzer.UnIndex(fmt.Sprintf("%v %v", p2.Name, "TODO"), id)
+		// 2. index new person:
+		analyzer.Index(fmt.Sprintf("%v %v", rq.Name, "TODO"), id)
+
+	}()
+
+	return http.StatusOK, nil, &PersonResponse{id, *newperson}, nil
 }
 
 // GET /person/{id}
@@ -254,10 +286,14 @@ func searchPerson(u *url.URL, h http.Header, _ interface{}) (int, http.Header, *
 		return http.StatusBadRequest, nil, nil, errors.New("search query missing (q)")
 	}
 	t0 := time.Now()
-	size, hits := 0, []byte("") //persons.Search(u.Query().Get("q"))
+	parsedQuery := strings.Split(strings.ToLower(q), " ") // TODO Query Parser
+	query := index.NewQuery().Must(parsedQuery)
+	res := analyzer.Idx.Query(query)
+	hits := srAsIntSet(res)
+	hitsPersons := persons.GetSeveral(hits.ToSlice())
 	return http.StatusOK, nil, &SeveralItemsResponse{
-			Count:  size,
+			Count:  hits.Size(),
 			TimeMs: float64(time.Now().Sub(t0)) / 1000,
-			Hits:   hits},
+			Hits:   hitsPersons},
 		nil
 }
