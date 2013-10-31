@@ -14,7 +14,7 @@
   <div class="grid m-grid--divide-2 l-grid--divide-3" id="container">
     <div class="menu grid_field-unit">
         <span class="logo"><strong>folk.deichman.no</strong></span>
-        <input id="search" class="search" type="text" placeholder="søk" />
+        <input id="search" class="search" type="text" placeholder="søk" autocomplete="off" />
         <input id="searched" type="hidden">
         <select class="select-avd">
           <option value="avd-alle">Hele Deichman</option>
@@ -27,14 +27,38 @@
         </select>
     </div>
 
-    <div class="grid_unit inactive soonrussekort">
+    <div class="grid_unit active soonedit active">
       <div class="russeinfo">
         <img src="/data/img/putin.jpg" class="russebilde">
+        <strong class="p_name"></strong><br>
+        <input type="text" class="p_role edit-m" value="" placeholder="stilling" />
+        <select class="select-avd">
+          {{range $p := .Departments}}
+          <option value="avd-{{$p.ID}}">{{$p.Name}}</option>
+            {{range $d := $p.Depts}}
+            <option value="avd-{{$d.ID}}">&nbsp;&nbsp;{{$d.Name}}</option>
+            {{end}}
+          {{end}}
+        </select><br>
+        <input class="p_avd_id" type="hidden">
+        <input class="p_id" type="hidden">
+        <input type="text" class="edit-m p_phone" value="" placeholder="telefon" /><br>
+        <textarea rows="2" cols="24" class="edit-l p_info" placeholder="hva driver jeg med?"></textarea><br>
+        <div class="edit-actions"><a class="edit-cancel">avbryt</a> / <a class="edit-save">lagre</a></div>
+      </div>
+    </div>
+
+    <div class="grid_unit inactive soonrussekort">
+      <div class="russeinfo">
+        <input class="p_id" type="hidden">
+        <img src="/data/img/putin.jpg" class="russebilde">
         <strong><a class="p_name" href="mailto:petter@dott.com">Mr Putin</a></strong><br>
-        <em><span class="p_role">&lt;stilling&gt;</span>, <span class="p_dept">&lt;avdeling&gt;</span></em><br>
-        &#9742; <span class="p_phone">&lt;telefon&gt;</span><br>
-        <span class="p_info">&lt;info&gt;</span><br>
-        <span class="edit"><a>endre</a></span>
+        <em><span class="p_role"></span> / <span class="p_dept">&lt;avdeling&gt;</span></em><br>
+         <input class="p_avd_id" type="hidden">
+         <input class="p_id" type="hidden">
+        &#9742; <span class="p_phone"></span><br>
+        <span class="p_info"></span><br>
+        <span class="edit"><a class="p_edit">endre</a></span>
       </div>
     </div>
 
@@ -70,6 +94,7 @@
     var q = $.trim( $('#search').val() );
     if (q === "" ) {
       $('.russekort').remove();
+      $('#searched').val("");
      return;
    }
    if (q === $('#searched').val() ) {
@@ -86,10 +111,12 @@
       $.each(data.Hits, function(i, p) {
           var $tr = $('.soonrussekort:first').clone();
           $tr.removeClass('soonrussekort').addClass('russekort');
-          $tr.find('.russebilde').attr('src', "/data/img/"+p.Data.Img);
+          $tr.find('.p_id').val(p.ID);
           $tr.find('.p_name').text(p.Data.Name).attr("href", "mailto:"+p.Data.Email);
+          $tr.find('.russebilde').attr('src', "/data/img/"+p.Data.Img);
           $tr.find('.p_role').text(p.Data.Role);
-          $tr.find('.p_dept').text( $('#'+ p.Data.Department).text() );
+          $tr.find('.p_avd_id').val( p.Data.Department );
+          $tr.find('.p_dept').text( $.trim( $('#'+ p.Data.Department).text() ) );
           $tr.addClass( $('#' + p.Data.Department).val() );
           $tr.find('.p_phone').text(p.Data.Phone);
           $tr.find('.p_info').text(p.Data.Info);
@@ -100,6 +127,7 @@
    }
 
     $("document").ready(function() {
+      var $edit; // storing the old div in case of cancel edit
       $('.select-avd').on('change', function() {
         var selected = $('.select-avd').val();
         if (selected === 'avd-alle') {
@@ -111,6 +139,71 @@
       });
 
       $('#search').on('keyup change', debounce(searchFolks, 50)); // only fire search after 50 ms since last keyup/change
+
+      $('#container').on('click', '.p_edit', function() {
+        // cancel other edits:
+        $('.edit-cancel').click();
+        $edit = $(this).parents('.russekort');
+        var $div = $('.soonedit').clone();
+        $div.removeClass('soonedit').addClass('russekort');
+        $div.find('.p_id').val( $edit.find('.p_id').val() );
+        $div.find('.p_name').text( $edit.find('.p_name').text() );
+        $div.find('.russebilde').attr('src', $edit.find('.russebilde').attr('src') );
+        $div.find('.p_phone').val( $edit.find('.p_phone').text() );
+        $div.find('.p_role').val( $edit.find('.p_role').text() );
+        $div.find('.select-avd').val('avd-' + $edit.find('.p_avd_id').val() );
+        $div.find('.p_info').val( $edit.find('.p_info').text() );
+        $edit.replaceWith($div);
+        // disable search and other edits while editing
+        $('#search').attr('disabled', true);
+      });
+
+      $('#container').on('click', '.edit-cancel', function() {
+        // bring back old div
+        $(this).parents('.russekort').replaceWith($edit);
+        // enable search again
+        $('#search').attr('disabled', false);
+      });
+
+      $('#container').on('click', '.edit-save', function() {
+        var $div = $(this).parents('.russekort');
+
+        var info = $div.find('.p_info').val();
+        var phone = $div.find('.p_phone').val();
+        var role = $div.find('.p_role').val();
+        var name = $div.find('.p_name').text();
+        var dept = parseInt( $div.find('.select-avd').val().substr(4) );
+        var email = $edit.find('.p_name').attr('href').substr(7); // strip mailto:
+        var img = $div.find('.russebilde').attr('src').split(/\\|\//).pop();
+
+        // send the update request
+        $.ajax({
+          url: "/api/person/" + $div.find('.p_id').val() + "?full=yes",
+          method: 'PATCH',
+          contentType: "application/json; charset=utf-8",
+          data: JSON.stringify({
+            Name: name,
+            Email: email,
+            Phone: phone,
+            Role: role,
+            Department: dept,
+            Img: img,
+            Info: info,
+          }),
+          dataType: 'json'
+        });
+
+        // update current edit div
+        $edit.find('.p_info').text( info );
+        $edit.find('.p_phone').text( phone );
+        $edit.find('.p_role').text( role );
+        $edit.find('.p_dept').text( $('#' + dept).text() );
+        $edit.find('.p_avd_id').val(dept);
+        $div.replaceWith($edit);
+        // enable search again
+        $('#search').attr('disabled', false);
+      });
+
 
     });
   </script>

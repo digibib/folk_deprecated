@@ -34,7 +34,7 @@ td { padding-right: 1em;}
 button { margin-right: 1em;}
 .error { color: red;}
 .invisible { display:none }
-.soonrussekort { display:none !important;}
+.soonrussekort, .soonedit { display:none !important;}
 
 @media only screen
 and (min-width : 768px) {

@@ -12,7 +12,10 @@ import (
 	"github.com/knakk/intset"
 )
 
-// DB is a simple database backed by a map and a mutex.
+// DB is a simple database backed by a map and a mutex. Since its intended
+// use is for mostly reads and very few writes, its not sharded. Consider
+// hashing keys and split the store into buckets if the sinlge lock becomes
+// an issue.
 type DB struct {
 	docs map[int][]byte
 	sync.RWMutex

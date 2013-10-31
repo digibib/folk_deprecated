@@ -242,8 +242,9 @@ func indexDB(db *DB, a *ftx.Analyzer) {
 		return
 	}
 	for _, p := range allp {
-		fmt.Printf("%v: %v %v\n", p.ID, p.Data.Name, mapDepartments[p.Data.Department].Name)
-		a.Index(fmt.Sprintf("%v %v", p.Data.Name, mapDepartments[p.Data.Department].Name), p.ID)
+		//fmt.Printf("%v: %v %v\n", p.ID, p.Data.Name, mapDepartments[p.Data.Department].Name)
+		a.Index(fmt.Sprintf("%v %v %v %v",
+			p.Data.Name, mapDepartments[p.Data.Department].Name, p.Data.Role, p.Data.Info), p.ID)
 	}
 }
 

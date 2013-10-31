@@ -24,6 +24,9 @@ type PersonRequest struct {
 	Department int
 	Email      string
 	Img        string
+	Role       string
+	Info       string
+	Phone      string
 }
 
 type PersonResponse struct {
@@ -115,7 +118,9 @@ func createPerson(u *url.URL, h http.Header, rq *PersonRequest) (int, http.Heade
 
 // PATCH /person/{id}
 func updatePerson(u *url.URL, h http.Header, rq *PersonRequest) (int, http.Header, *PersonResponse, error) {
+	full := u.Query().Get("full")
 	idStr := u.Query().Get("id")
+	var p, oldp PersonRequest
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		return http.StatusBadRequest, nil, nil, errors.New("person ID must be an integer")
@@ -124,10 +129,21 @@ func updatePerson(u *url.URL, h http.Header, rq *PersonRequest) (int, http.Heade
 	if err != nil {
 		return http.StatusNotFound, nil, nil, errors.New("person not found")
 	}
+	err = json.Unmarshal(*oldperson, &oldp)
+	if err != nil {
+		log.Println(err)
+		return http.StatusInternalServerError, nil, nil, errors.New("failed to store in database")
+	}
 	if _, ok := mapDepartments[rq.Department]; !ok {
 		return http.StatusBadRequest, nil, nil, errors.New("department doesn't exist")
 	}
-	p := PersonRequest{Name: rq.Name, Department: rq.Department, Email: rq.Email, Img: rq.Img}
+	if full == "yes" {
+		p = *rq
+	} else {
+		p = PersonRequest{
+			Name: rq.Name, Department: rq.Department, Email: rq.Email, Img: rq.Img,
+			Info: oldp.Info, Role: oldp.Role, Phone: oldp.Phone}
+	}
 	b, err := json.Marshal(p)
 	if err != nil {
 		return http.StatusInternalServerError, nil, nil, errors.New("failed to marshal JSON")
@@ -140,12 +156,12 @@ func updatePerson(u *url.URL, h http.Header, rq *PersonRequest) (int, http.Heade
 
 	folkSaver.Inc()
 	go func() {
-		var p2 PersonRequest
-		_ = json.Unmarshal(*oldperson, &p2)
 		// 1. unindex old person:
-		analyzer.UnIndex(fmt.Sprintf("%v %v", p2.Name, mapDepartments[p2.Department].Name), id)
+		analyzer.UnIndex(fmt.Sprintf("%v %v %v %v",
+			oldp.Name, mapDepartments[oldp.Department].Name, oldp.Role, oldp.Info), id)
 		// 2. index new person:
-		analyzer.Index(fmt.Sprintf("%v %v", rq.Name, mapDepartments[rq.Department].Name), id)
+		analyzer.Index(fmt.Sprintf("%v %v %v %v",
+			p.Name, mapDepartments[p.Department].Name, p.Role, p.Info), id)
 
 	}()
 

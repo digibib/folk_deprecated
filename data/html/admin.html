@@ -20,7 +20,7 @@
           {{range $p := .Departments}}
           <option id="{{$p.ID}}" value="avd-{{$p.ID}}">{{$p.Name}}</option>
             {{range $d := $p.Depts}}
-            <option id="{{$d.ID}}" value="avd-{{$p.ID}} avd-{{$d.ID}}">&nbsp;&nbsp;{{$d.Name}}</option>
+            <option id="{{$d.ID}}" value="avd-{{$d.ID}} avd-{{$p.ID}}">&nbsp;&nbsp;{{$d.Name}}</option>
             {{end}}
           {{end}}
         </select>
