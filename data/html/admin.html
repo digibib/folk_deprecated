@@ -18,9 +18,9 @@
         <select class="select-avd">
           <option value="avd-alle">Hele Deichman</option>
           {{range $p := .Departments}}
-          <option value="avd-{{$p.ID}}">{{$p.Name}}</option>
+          <option id="{{$p.ID}}" value="avd-{{$p.ID}}">{{$p.Name}}</option>
             {{range $d := $p.Depts}}
-            <option value="avd-{{$p.ID}} avd-{{$d.ID}}">&nbsp;&nbsp;{{$d.Name}}</option>
+            <option id="{{$d.ID}}" value="avd-{{$p.ID}} avd-{{$d.ID}}">&nbsp;&nbsp;{{$d.Name}}</option>
             {{end}}
           {{end}}
         </select>

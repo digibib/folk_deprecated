@@ -19,9 +19,9 @@
         <select class="select-avd">
           <option value="avd-alle">Hele Deichman</option>
           {{range $p := .Departments}}
-          <option value="avd-{{$p.ID}}">{{$p.Name}}</option>
+          <option id="{{$p.ID}}" value="avd-{{$p.ID}}">{{$p.Name}}</option>
             {{range $d := $p.Depts}}
-            <option value="avd-{{$p.ID}} avd-{{$d.ID}}">&nbsp;&nbsp;{{$d.Name}}</option>
+            <option id="{{$d.ID}}" value="avd-{{$p.ID}} avd-{{$d.ID}}">&nbsp;&nbsp;{{$d.Name}}</option>
             {{end}}
           {{end}}
         </select>
@@ -31,9 +31,9 @@
       <div class="russeinfo">
         <img src="/data/img/putin.jpg" class="russebilde">
         <strong><a class="p_name" href="mailto:petter@dott.com">Mr Putin</a></strong><br>
-        <em><span class="p_role">President</span>, <span class="p_dept">Bøler</span></em><br>
-        &#9742; <span class="p_phone">12312123</span><br>
-        <span class="p_info">Liker jakt og fiske. Nyskilt og klar for nye eventyr.</span><br>
+        <em><span class="p_role">&lt;stilling&gt;</span>, <span class="p_dept">&lt;avdeling&gt;</span></em><br>
+        &#9742; <span class="p_phone">&lt;telefon&gt;</span><br>
+        <span class="p_info">&lt;info&gt;</span><br>
         <span class="edit"><a>endre</a></span>
       </div>
     </div>
@@ -89,7 +89,8 @@
           $tr.find('.russebilde').attr('src', "/data/img/"+p.Data.Img);
           $tr.find('.p_name').text(p.Data.Name).attr("href", "mailto:"+p.Data.Email);
           $tr.find('.p_role').text(p.Data.Role);
-          $tr.find('.p_dept').text(p.Data.Department);
+          $tr.find('.p_dept').text( $('#'+ p.Data.Department).text() );
+          $tr.addClass( $('#' + p.Data.Department).val() );
           $tr.find('.p_phone').text(p.Data.Phone);
           $tr.find('.p_info').text(p.Data.Info);
 
@@ -109,7 +110,7 @@
         }
       });
 
-      $('#search').on('keyup change', debounce(searchFolks, 50)); // only fire search after 50 ms
+      $('#search').on('keyup change', debounce(searchFolks, 50)); // only fire search after 50 ms since last keyup/change
 
     });
   </script>
