@@ -17,7 +17,7 @@ import (
 	"github.com/knakk/ftx"
 	"github.com/rcrowley/go-tigertonic"
 
-	"github.com/davecheney/profile"
+	//"github.com/davecheney/profile"
 )
 
 const MAX_MEM_SIZE = 2 * 1024 * 1024 // 2 MB
@@ -208,6 +208,7 @@ func createSession(r *http.Request) *sessions.Session {
 	return session
 }
 
+// uploadHandler upload image files to the folder /data/img/
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseMultipartForm(MAX_MEM_SIZE); err != nil {
 		log.Println(err)
@@ -248,7 +249,7 @@ func indexDB(db *DB, a *ftx.Analyzer) {
 
 func init() {
 	// Search Analyzer & index
-	analyzer = ftx.NewNGramAnalyzer(2, 15)
+	analyzer = ftx.NewNGramAnalyzer(2, 20)
 
 	// load department db
 	deptsdb, err := NewFromFile("data/avd.db")
@@ -309,7 +310,7 @@ func init() {
 }
 
 func main() {
-	defer profile.Start(profile.CPUProfile).Stop()
+	//defer profile.Start(profile.CPUProfile).Stop()
 	port := flag.String("port", "9999", "serve from this port")
 	username = flag.String("u", "admin", "admin username")
 	password = flag.String("p", "secret", "admin password")
