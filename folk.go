@@ -250,7 +250,7 @@ func indexDB(db *DB, a *ftx.Analyzer) {
 
 func init() {
 	// Search Analyzer & index
-	analyzer = ftx.NewNGramAnalyzer(2, 20)
+	analyzer = ftx.NewNGramAnalyzer(1, 20)
 
 	// load department db
 	deptsdb, err := NewFromFile("data/avd.db")
