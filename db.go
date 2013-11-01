@@ -120,10 +120,13 @@ func (db *DB) Del(id int) bool {
 // All retuns all the docs in the database as a JSON array, in the form:
 // [{"ID": 1, "Data": {jsonData}},{..},{..}]
 func (db *DB) All() []byte {
-	var allDocs bytes.Buffer
-	allDocs.Write([]byte("["))
 	db.RLock()
 	defer db.RUnlock()
+	if db.Size() == 0 {
+		return []byte("null") // JSON for empty array
+	}
+	var allDocs bytes.Buffer
+	allDocs.Write([]byte("["))
 	size := db.Size()
 	i := 0
 	for k := range db.all {

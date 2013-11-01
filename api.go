@@ -131,7 +131,7 @@ func updatePerson(u *url.URL, h http.Header, rq *PersonRequest) (int, http.Heade
 	}
 	err = json.Unmarshal(*oldperson, &oldp)
 	if err != nil {
-		log.Println(err)
+		log.Println("PATCH unmarshal oldperson: %v ", err)
 		return http.StatusInternalServerError, nil, nil, errors.New("failed to store in database")
 	}
 	if _, ok := mapDepartments[rq.Department]; !ok {
@@ -220,17 +220,24 @@ func searchPerson(u *url.URL, h http.Header, _ interface{}) (int, http.Header, *
 
 	// search
 	q := u.Query().Get("q")
-	if q == "" {
-		return http.StatusBadRequest, nil, nil, errors.New("search query missing (q)")
-	}
 	t0 := time.Now()
-	parsedQuery := strings.Split(strings.ToLower(q), " ") // TODO Query Parser
-	query := index.NewQuery().Must(parsedQuery)
-	res := analyzer.Idx.Query(query)
-	hits := srAsIntSet(res)
-	hitsPersons := persons.GetSeveral(hits.ToSlice())
+	var size int
+	var hitsPersons []byte
+	if q == "" {
+		hitsPersons = persons.All()
+		size = persons.Size()
+	} else {
+		// TODO remove single char from query stirng, eg 'Frank Z' => 'Frank'
+		parsedQuery := strings.Split(strings.ToLower(q), " ") // TODO Query Parser
+		query := index.NewQuery().Must(parsedQuery)
+		res := analyzer.Idx.Query(query)
+		hits := srAsIntSet(res)
+		size = hits.Size()
+		hitsPersons = persons.GetSeveral(hits.ToSlice())
+	}
+
 	return http.StatusOK, nil, &SeveralItemsResponse{
-			Count:  hits.Size(),
+			Count:  size,
 			TimeMs: float64(time.Now().Sub(t0)) / 1000,
 			Hits:   hitsPersons},
 		nil
