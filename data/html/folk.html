@@ -15,7 +15,7 @@
     <div class="menu grid_field-unit">
         <span class="logo"><strong>folk.deichman.no</strong></span>
         <input id="search" class="search" type="text" placeholder="søk" autocomplete="off" />
-        <input id="searched" type="hidden">
+        <input id="searched" type="hidden" value="start typing!">
         <select class="select-avd">
           <option value="avd-alle">Hele Deichman</option>
           {{range $p := .Departments}}
@@ -138,7 +138,11 @@
         }
       });
 
+
       $('#search').on('keyup change', debounce(searchFolks, 50)); // only fire search after 50 ms since last keyup/change
+
+      // Show all on pageload
+      searchFolks();
 
       $('#container').on('click', '.p_edit', function() {
         // cancel other edits:
