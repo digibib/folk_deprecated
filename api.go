@@ -190,10 +190,20 @@ func deletePerson(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "person ID must be an integer", http.StatusBadRequest)
 		return
 	}
-	_, err = persons.Get(id)
+	p, err := persons.Get(id)
 	if err != nil {
 		http.Error(w, "person not found", http.StatusBadRequest)
 	}
+	var oldp PersonRequest
+	err = json.Unmarshal(*p, &oldp)
+	if err != nil {
+		log.Println("failed to unindex person to-be delted")
+	}
+	go func() {
+		//  unindex deleted person:
+		analyzer.UnIndex(fmt.Sprintf("%v %v %v %v",
+			oldp.Name, mapDepartments[oldp.Department].Name, oldp.Role, oldp.Info), id)
+	}()
 	persons.Del(id)
 	folkSaver.Inc()
 	fmt.Fprint(w, "OK")
