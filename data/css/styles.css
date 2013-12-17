@@ -11,7 +11,7 @@ label { font-weight: bold;}
 .russeinfo { line-height:1.7em; font-size:0.95em;}
 .inactive:hover { background: #eee;}
 .active { background: #FEDF00;}
-.russebilde { float: left; width:110px; height: 150px; margin-right: 1em;}
+.russebilde { float: left; width:100px; height: 150px; margin-right: 1em;}
 .edit { visibility:hidden; position: absolute; right:4px; bottom:0px; font-family:monospace; font-size:0.8em;}
 a { color: blue; }
 a:hover { text-decoration: underline; cursor:pointer; text-decoration: none;}
