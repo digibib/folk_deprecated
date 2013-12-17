@@ -217,8 +217,8 @@ func searchPerson(u *url.URL, h http.Header, _ interface{}) (int, http.Header, *
 		t0 := time.Now()
 		all := persons.all.All()
 		sort.Sort(sort.Reverse(sort.IntSlice(all)))
-		max := 20
-		if len(all) < 20 {
+		max := 150
+		if len(all) < 150 {
 			max = len(all)
 		}
 		return http.StatusOK, nil, &SeveralItemsResponse{
