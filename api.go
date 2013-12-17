@@ -40,8 +40,8 @@ type SeveralItemsResponse struct {
 	Hits   json.RawMessage
 }
 
-func srAsIntSet(sr *index.SearchResults) intset.IntSet {
-	s := intset.New()
+func srAsIntSet(sr *index.SearchResults) *intset.BitSet {
+	s := intset.NewBitSet(0)
 	for _, h := range sr.Hits {
 		s.Add(h.ID)
 	}
@@ -215,7 +215,7 @@ func searchPerson(u *url.URL, h http.Header, _ interface{}) (int, http.Header, *
 	page := u.Query().Get("page")
 	if page != "" {
 		t0 := time.Now()
-		all := persons.all.ToSlice()
+		all := persons.all.All()
 		sort.Sort(sort.Reverse(sort.IntSlice(all)))
 		max := 20
 		if len(all) < 20 {
@@ -243,7 +243,7 @@ func searchPerson(u *url.URL, h http.Header, _ interface{}) (int, http.Header, *
 		res := analyzer.Idx.Query(query)
 		hits := srAsIntSet(res)
 		size = hits.Size()
-		hitsPersons = persons.GetSeveral(hits.ToSlice())
+		hitsPersons = persons.GetSeveral(hits.All())
 	}
 
 	return http.StatusOK, nil, &SeveralItemsResponse{

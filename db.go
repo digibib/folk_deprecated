@@ -19,8 +19,8 @@ import (
 type DB struct {
 	docs map[int][]byte
 	sync.RWMutex
-	idMax int           // autoincremented ID
-	all   intset.IntSet // keep an index of all doc IDs
+	idMax int            // autoincremented ID
+	all   *intset.BitSet // keep an index of all doc IDs
 }
 
 type doc struct {
@@ -32,7 +32,7 @@ type doc struct {
 func New(size int) *DB {
 	return &DB{
 		docs: make(map[int][]byte, size),
-		all:  intset.New(),
+		all:  intset.NewBitSet(0),
 	}
 }
 
@@ -129,7 +129,7 @@ func (db *DB) All() []byte {
 	allDocs.Write([]byte("["))
 	size := db.Size()
 	i := 0
-	for k := range db.all {
+	for _, k := range db.all.All() {
 		allDocs.Write([]byte(fmt.Sprintf("{\"ID\":%v,\"Data\":", k)))
 		allDocs.Write(db.docs[k])
 		allDocs.Write([]byte("}"))
